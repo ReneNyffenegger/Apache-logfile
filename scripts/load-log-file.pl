@@ -16,7 +16,7 @@ $dbh -> {AutoCommit} = 0;
 
 my $rec_cnt = 0;
 
-my $insert_sth = $dbh->prepare("insert into log values (strftime('\%s', ?), ?, ?, ?, ?, ?, ?, ?, ?, ?)") or die;
+my $insert_sth = $dbh->prepare("insert into log (t, method, path, status, referrer, rogue, robot, ipnr, agent, size  )values (strftime('\%s', ?), ?, ?, ?, ?, ?, ?, ?, ?, ?)") or die;
 
 my $start_t = time;
 
@@ -44,7 +44,7 @@ sub load_log_file {
     my $rogue = 0;
     my $robot = '';
   
-    if ( my ($year, $month, $day, $hour, $min, $sec, $ipnr, $addr, $method, $path, $http, $status, $size, $referrer, $agent) = $log_l =~ m!^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d) (\d+\.\d+\.\d+\.\d+) \[([^]]+)\] "(\w+) (.*) (HTTP/1\.\d)" (\d+) (\d+) "([^"]*)" "([^"]*)"!) {
+    if ( my ($year, $month, $day, $hour, $min, $sec, $ipnr, $method, $path, $http, $status, $size, $referrer, $agent) = $log_l =~ m!^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d) (\d+\.\d+\.\d+\.\d+) "(\w+) (.*) (HTTP/1\.\d)" (\d+) (\d+) "([^"]*)" "([^"]*)"!) {
 
       if ($parse_robot_from_agent_string) {
         my $ua = new HTTP::BrowserDetect($agent);
@@ -73,7 +73,7 @@ sub load_log_file {
       $insert_sth -> execute("$year-$month-$day $hour:$min:$sec", $method_, $path, int($status), $referrer, $rogue, $robot, $ipnr, $agent, $size);
     }
     else {
-      die $log_l;
+      die "Could not parse\n$log_l\n";
     }
   
   }
