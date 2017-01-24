@@ -3,34 +3,43 @@ use warnings;
 use strict;
 
 use DBI;
+use Getopt::Long;
 
 my $db = 'ApacheLogfile.db';
 
 die unless -e $db;
 my $dbh = DBI->connect("dbi:SQLite:dbname=$db") or die "$db does not exist";
 
-my $sth = $dbh -> prepare ("
-  select
-    count(*) cnt,
-    min(path) path_min,
-    max(path) path_max,
-    referrer
-  from
-    log
-  where
-    rogue    = 0         and
-    robot    = ''        and
-    referrer is not null and
-    referrer not like '\%renenyffenegger.ch\%' and
-    referrer like '%google%search?%'
-  group by
-    referrer
-  order by
-    count(*)");
-$sth -> execute;
-while (my $r = $sth -> fetchrow_hashref) {
-   printf("%6i %-50s %-50s %s\n", $r->{cnt}, $r->{path_min}, $r->{path_max}, $r->{referrer});
-}
+
+Getopt::Long::GetOptions (
+  "count-per-day"           => \my $count_per_day,
+  "show-day:s"              => \my $show_day,
+  "show-id:i"               => \my $show_id,
+) or die;
+
+
+# my $sth = $dbh -> prepare ("
+#   select
+#     count(*) cnt,
+#     min(path) path_min,
+#     max(path) path_max,
+#     referrer
+#   from
+#     log
+#   where
+#     rogue    = 0         and
+#     robot    = ''        and
+#     referrer is not null and
+#     referrer not like '\%renenyffenegger.ch\%' and
+#     referrer like '%google%search?%'
+#   group by
+#     referrer
+#   order by
+#     count(*)");
+# $sth -> execute;
+# while (my $r = $sth -> fetchrow_hashref) {
+#    printf("%6i %-50s %-50s %s\n", $r->{cnt}, $r->{path_min}, $r->{path_max}, $r->{referrer});
+# }
 
 # my $sth = $dbh -> prepare ("select count(*) cnt, path from log where referrer like '\%google.\%' group by path order by count(*)");
 # $sth -> execute;
@@ -44,11 +53,85 @@ while (my $r = $sth -> fetchrow_hashref) {
 #    printf("%6i %s\n", $r->{cnt}, $r->{path});
 # }
 
-# my $sth = $dbh -> prepare ("select count(*) cnt, date(t, 'unixepoch') dt from log group by date(t, 'unixepoch') order by date(t, 'unixepoch')");
-# $sth -> execute;
-# while (my $r = $sth -> fetchrow_hashref) {
-#    printf("%6i %s\n", $r->{cnt}, $r->{dt});
-# }
+if ($count_per_day) { # {
+
+  my $sth = $dbh -> prepare ("
+     select
+       count(*) cnt,
+       date(t, 'unixepoch') dt
+     from
+       log
+     where
+       robot = '' and
+       rogue = 0
+     group by
+       date(t, 'unixepoch')
+     order by
+       count(*)
+--     date(t, 'unixepoch')
+     ");
+  $sth -> execute;
+  while (my $r = $sth -> fetchrow_hashref) {
+     printf("%6i %s\n", $r->{cnt}, $r->{dt});
+  }
+
+} # }
+elsif ($show_day) { #  {
+  my $sth = $dbh -> prepare ("
+    select
+      id,
+      time(t, 'unixepoch') tm,
+      ipnr,
+      path
+    from
+      log
+    where
+      robot = '' and
+      rogue = 0  and
+      date(t, 'unixepoch') = :1
+    order by
+      t
+  ");
+
+  $sth -> execute($show_day);
+
+  while (my $r = $sth -> fetchrow_hashref) {
+     printf("%6d  %s %15s %s\n", $r->{id}, $r->{tm}, $r->{ipnr}, $r->{path});
+  }
+
+} #  }
+elsif ($show_id) { #  {
+
+  my $sth = $dbh -> prepare ("
+    select
+      datetime(t, 'unixepoch') dttm,
+      method,
+      path,
+      status,
+      referrer,
+      rogue,
+      robot,
+      ipnr,
+      agent,
+      size
+    from
+      log
+    where
+      id = :1
+  ");
+  $sth -> execute($show_id);
+
+  my $r = $sth->fetchrow_hashref;
+
+  printf "%s %s\n", $r->{method}, $r->{path};
+  printf "  status:   %d\n", $r->{status};
+  printf "  referrer: %s\n", $r->{referrer};
+  printf "  robot:    %s\n", $r->{robot};
+  printf "  ipnr:     %s\n", $r->{ipnr};
+  printf "  agent:    %s\n", $r->{agent};
+  printf "  size:     %s\n", $r->{size};
+  
+} #  }
 
 # my $sth = $dbh -> prepare ("select count(*) cnt, path from log where t between strftime('\%s', ?) and strftime('\%s', ?) group by path order by count(*)");
 # $sth -> execute('2016-12-06', '2016-12-07');
