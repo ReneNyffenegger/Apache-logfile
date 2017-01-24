@@ -2,11 +2,25 @@
 use warnings;
 use strict;
 
+use Getopt::Long;
+
 use DBI;
+
+Getopt::Long::GetOptions(
+    "force"               => \my $force,
+) or die;
 
 my $db = 'ApacheLogfile.db';
 
-die "$db already exists" if -e $db;
+if (-e $db) {
+  if ($force) {
+    print "$db already exists, removing it\n";
+    unlink $db;
+  }
+  else {
+    die "$db already exists";
+  }
+}
 
 my $dbh = DBI->connect("dbi:SQLite:dbname=$db") or die "Could not create database $db";
 
@@ -16,6 +30,7 @@ $dbh -> do('create table ip (
 )');
 
 $dbh -> do('create table log (
+  id        integer primary key autoincrement,
   t                ,   -- seconds since 1970-01-01 (unix epoch) 
   method           ,   -- G[ET], P[OST]
   path             ,   -- /robots.txt
