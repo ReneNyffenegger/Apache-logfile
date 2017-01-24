@@ -47,7 +47,7 @@ sub get_file {
   else {
     $extracted_file_name = $remote_file_name;
     $age_in_months       = 0; # not needed
-    move("downloaded/$remote_file_name", "extraced/$remote_file_name") or die;
+    move("downloaded/$remote_file_name", "extracted") or die "$! - downloaded/$remote_file_name -> extracted";
   
     print "  moved downloaded/$remote_file_name -> extracted/$remote_file_name\n";
   }
@@ -124,6 +124,8 @@ sub translate_file {
   close $dest;
 
   unlink $from or die;
+
+  print "  translate_file: $from -> $to\n" if $verbose;
 
 }
 
