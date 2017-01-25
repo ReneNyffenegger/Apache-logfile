@@ -127,6 +127,12 @@ elsif ($show_id) { #  {
 
   my $r = $sth->fetchrow_hashref;
 
+  unless ($r) {
+    print "No record found\n";
+    exit;
+
+  }
+
   print  "\n";
   printf "%s %s\n", $r->{method}, $r->{path};
   printf "  date:     %s  (%d)\n", $r->{dttm}, $r->{t};
