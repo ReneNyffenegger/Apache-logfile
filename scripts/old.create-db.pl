@@ -25,7 +25,7 @@ if (-e $db) {
 my $dbh = DBI->connect("dbi:SQLite:dbname=$db") or die "Could not create database $db";
 
 $dbh -> do('create table ip (
-  ipnr,
+  ipnr primary key,
   fqn
 )');
 

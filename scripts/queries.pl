@@ -13,8 +13,10 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=$db") or die "$db does not exist";
 
 Getopt::Long::GetOptions (
   "count-per-day"           => \my $count_per_day,
-  "show-day:s"              => \my $show_day,
-  "show-id:i"               => \my $show_id,
+  "day:s"                   => \my $show_day,
+  "id:i"                    => \my $show_id,
+  "fqn:s"                   => \my $show_fqn,
+  "order-by-count"          => \my $order_by_cnt
 ) or die;
 
 
@@ -55,6 +57,12 @@ Getopt::Long::GetOptions (
 
 if ($count_per_day) { # {
 
+  my $order_by = "date(t, 'unixepoch')";
+
+  if ($order_by_cnt) {
+     $order_by = "count(*)";
+  }
+
   my $sth = $dbh -> prepare ("
      select
        count(*) cnt,
@@ -67,8 +75,7 @@ if ($count_per_day) { # {
      group by
        date(t, 'unixepoch')
      order by
-       count(*)
---     date(t, 'unixepoch')
+       $order_by
      ");
   $sth -> execute;
   while (my $r = $sth -> fetchrow_hashref) {
@@ -77,27 +84,20 @@ if ($count_per_day) { # {
 
 } # }
 elsif ($show_day) { #  {
-  my $sth = $dbh -> prepare ("
-    select
-      id,
-      time(t, 'unixepoch') tm,
-      ipnr,
-      path
-    from
-      log
-    where
-      robot = '' and
-      rogue = 0  and
-      date(t, 'unixepoch') = :1
-    order by
-      t
-  ");
 
-  $sth -> execute($show_day);
+  query_flat(
+      'time', 
+      "date(t, 'unixepoch') = :1", $show_day
+  );
 
-  while (my $r = $sth -> fetchrow_hashref) {
-     printf("%6d  %s %15s %s\n", $r->{id}, $r->{tm}, $r->{ipnr}, $r->{path});
-  }
+} #  }
+elsif ($show_fqn) { #  {
+
+  query_flat(
+     'datetime',
+     "fqn  like :1", '%' . $show_fqn  . '%'
+  );
+
 
 } #  }
 elsif ($show_id) { #  {
@@ -110,8 +110,10 @@ elsif ($show_id) { #  {
       status,
       referrer,
       rogue,
+      requisite,
       robot,
       ipnr,
+      fqn,
       agent,
       size
     from
@@ -123,13 +125,15 @@ elsif ($show_id) { #  {
 
   my $r = $sth->fetchrow_hashref;
 
+  print  "\n";
   printf "%s %s\n", $r->{method}, $r->{path};
-  printf "  status:   %d\n", $r->{status};
-  printf "  referrer: %s\n", $r->{referrer};
-  printf "  robot:    %s\n", $r->{robot};
-  printf "  ipnr:     %s\n", $r->{ipnr};
-  printf "  agent:    %s\n", $r->{agent};
-  printf "  size:     %s\n", $r->{size};
+  printf "  status:   %d\n"   , $r->{status};
+  printf "  referrer: %s\n"   , $r->{referrer};
+  printf "  robot:    %s\n"   , $r->{robot};
+  printf "  ipnr:     %s %s\n", $r->{ipnr}, $r->{fqn};
+  printf "  agent:    %s\n"   , $r->{agent};
+  printf "  rog/req:  %d %d\n", $r->{rogue}, $r->{requisite};
+  printf "  size:     %s\n"   , $r->{size};
   
 } #  }
 
@@ -202,3 +206,45 @@ elsif ($show_id) { #  {
 #    printf("%3i  %15s  %s\n", $r->{cnt}, $r->{ipnr}, $r->{agent});
 # }
 
+
+sub query_flat {
+
+  my $tm        = shift;
+  my $where     = shift;
+  my $where_val = shift;
+
+
+  my $sth = $dbh -> prepare ("
+    select
+      id,
+      $tm(t, 'unixepoch') tm,
+      ipnr,
+      fqn,
+      path,
+      referrer
+    from
+      log
+    where
+      robot     = '' and
+      rogue     = 0  and
+      requisite = 0  and
+      $where
+    order by
+      t
+  ");
+
+  $sth -> execute($where_val);
+
+
+  while (my $r = $sth -> fetchrow_hashref) {
+     my $fqn = $r->{fqn};
+     if ($fqn eq 'SERVFAIL' or $fqn eq 'NXDOMAIN') {
+       $fqn = $r->{ipnr};
+     }
+     elsif ($fqn =~ /\.([^.]+)\.([^.]+)\.$/) {
+       $fqn = "$1.$2";
+     }
+     printf("%6d  %s  %-80s %-20s %s\n", $r->{id}, $r->{tm}, $r->{path}, $fqn, $r->{referrer});
+  }
+
+}
