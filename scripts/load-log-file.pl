@@ -136,7 +136,9 @@ sub load_log_file {
 
 }
 sub is_rogue {
-  my $path = shift;
+  my $path     = shift;
+  my $referrer = shift;
+
   return 1 if $path =~ m!/[Ff]?ckeditor!;
   return 1 if $path =~ m!/typo3/!;
   return 1 if $path =~ m!^/wordpress/!;
@@ -158,6 +160,13 @@ sub is_rogue {
   return 1 if $path eq  '/wp/';
   return 1 if uc($path) eq  '/README.txt';
   return 1 if length($path) > 500;
+
+  return 1 if $referrer = 'http://buttons-for-website.com'                                                                and path = '/';
+  return 1 if $referrer = 'http://buttons-for-your-website.com'                                                           and path = '/';
+  return 1 if $referrer = 'http://burger-imperia.com/'                                                                    and path = '/';
+  return 1 if $referrer = 'http://1-free-share-buttons.com'                                                               and path = '/';
+  return 1 if $referrer = 'http://blog.societyforexcellenceineducation.org/cat-31/india-dissertation-help-writing.html'   and path = '/';
+
   return 0;
 }
 
