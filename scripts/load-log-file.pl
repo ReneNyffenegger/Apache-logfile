@@ -109,14 +109,21 @@ sub load_log_file {
       }
 
       if ($do_insert) {
+
+        my $fqn = ipnr_2_fqn($ipnr);
+
         if ($parse_robot_from_agent_string) {
-          my $ua = new HTTP::BrowserDetect($agent);
-          $robot = $ua->robot_string || '';
+          if ($fqn eq 'spider.tiger.ch.') {
+            $robot = 'spider.tiger.ch';
+          }
+          else {
+            my $ua = new HTTP::BrowserDetect($agent);
+            $robot = $ua->robot_string || '';
+          }
         }
   
         $rogue = is_rogue($path);
 
-        my $fqn = ipnr_2_fqn($ipnr);
 
         my $requisite = 0;
         if ($path eq '/favicon.ico' or $path eq '/robots.txt' or $path =~ /\.(png|css|png|jpg|woff|js|gif|php|pdf|ttf)$/ or $path eq '/font/cartogothicstd-book-webfont.eot?') {
