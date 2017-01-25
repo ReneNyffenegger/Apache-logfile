@@ -7,7 +7,7 @@ use Exporter;
 use DBI;
 
 our @ISA = 'Exporter';
-our @EXPORT = qw( $dbh );
+our @EXPORT = qw( $dbh shorten_fqn);
 our $dbh;
 
 BEGIN {
@@ -20,6 +20,20 @@ BEGIN {
   $dbh->{AutoCommit}=0;
 
 
+}
+
+sub shorten_fqn {
+  my $fqn  = shift;
+  my $ipnr = shift;
+
+  if ($fqn eq 'SERVFAIL' or $fqn eq 'NXDOMAIN') {
+    $fqn = $ipnr
+  }
+  elsif ($fqn =~ /\.([^.]+)\.([^.]+)\.$/) {
+    $fqn = "$1.$2";
+  }
+
+  return $fqn;
 }
 
 1;

@@ -246,14 +246,8 @@ sub query_flat {
 
 
   while (my $r = $sth -> fetchrow_hashref) {
-     my $fqn = $r->{fqn};
-     if ($fqn eq 'SERVFAIL' or $fqn eq 'NXDOMAIN') {
-       $fqn = $r->{ipnr};
-     }
-     elsif ($fqn =~ /\.([^.]+)\.([^.]+)\.$/) {
-       $fqn = "$1.$2";
-     }
-     printf("%6d  %s  %-80s %-20s %s\n", $r->{id}, $r->{tm}, $r->{path}, $fqn, $r->{referrer});
+    my $fqn = shorten_fqn($r->{fqn}, $r->{ipnr});
+    printf("%6d  %s  %-80s %-20s %s\n", $r->{id}, $r->{tm}, $r->{path}, $fqn, $r->{referrer});
   }
 
 }
