@@ -86,6 +86,8 @@ from
 select count(*) from log_;  
 select count(*) from log;  
 
+create index log_t_ix on log (t);
+
 drop table log_;
 
 commit;

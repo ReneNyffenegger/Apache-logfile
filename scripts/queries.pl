@@ -3,12 +3,13 @@ use warnings;
 use strict;
 
 use DBI;
+use ApacheLogDB;
 use Getopt::Long;
 
-my $db = 'ApacheLogfile.db';
-
-die unless -e $db;
-my $dbh = DBI->connect("dbi:SQLite:dbname=$db") or die "$db does not exist";
+# my $db = 'ApacheLogfile.db';
+# 
+# die unless -e $db;
+# my $dbh = DBI->connect("dbi:SQLite:dbname=$db") or die "$db does not exist";
 
 
 Getopt::Long::GetOptions (
@@ -104,6 +105,7 @@ elsif ($show_id) { #  {
 
   my $sth = $dbh -> prepare ("
     select
+      t                        t,
       datetime(t, 'unixepoch') dttm,
       method,
       path,
@@ -127,13 +129,14 @@ elsif ($show_id) { #  {
 
   print  "\n";
   printf "%s %s\n", $r->{method}, $r->{path};
-  printf "  status:   %d\n"   , $r->{status};
-  printf "  referrer: %s\n"   , $r->{referrer};
-  printf "  robot:    %s\n"   , $r->{robot};
-  printf "  ipnr:     %s %s\n", $r->{ipnr}, $r->{fqn};
-  printf "  agent:    %s\n"   , $r->{agent};
-  printf "  rog/req:  %d %d\n", $r->{rogue}, $r->{requisite};
-  printf "  size:     %s\n"   , $r->{size};
+  printf "  date:     %s  (%d)\n", $r->{dttm}, $r->{t};
+  printf "  status:   %d\n"      , $r->{status};
+  printf "  referrer: %s\n"      , $r->{referrer};
+  printf "  robot:    %s\n"      , $r->{robot};
+  printf "  ipnr:     %s %s\n"   , $r->{ipnr}, $r->{fqn};
+  printf "  agent:    %s\n"      , $r->{agent};
+  printf "  rog/req:  %d %d\n"   , $r->{rogue}, $r->{requisite};
+  printf "  size:     %s\n"      , $r->{size};
   
 } #  }
 

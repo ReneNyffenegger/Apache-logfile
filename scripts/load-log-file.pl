@@ -2,21 +2,29 @@
 use warnings;
 use strict;
 use Time::HiRes qw(time);
+use Time::Piece;
 use HTTP::BrowserDetect;
+use Net::DNS::Resolver;
 
-use DBI;
+use ApacheLogDB;
+
+
+my $t_1970 = Time::Piece->strptime('1970-01-01 00:00:00', '%Y-%m-%d %H:%M:%S');
 
 my $parse_robot_from_agent_string = 1;
 
-my $db = 'ApacheLogfile.db';
+my $dns_resolver = new Net::DNS::Resolver;
+my %ipnrs;
 
-die unless -e $db;
-my $dbh = DBI->connect("dbi:SQLite:dbname=$db") or die "$db does not exist";
-$dbh -> {AutoCommit} = 0;
+my $t_max_in_log = ($dbh->selectrow_array('select max(t) from log'))[0];
+print "Max t in log: $t_max_in_log\n";
 
 my $rec_cnt = 0;
 
-my $insert_sth = $dbh->prepare("insert into log (t, method, path, status, referrer, rogue, robot, ipnr, agent, size  )values (strftime('\%s', ?), ?, ?, ?, ?, ?, ?, ?, ?, ?)") or die;
+# my $insert_sth = $dbh->prepare("insert into log (t, method, path, status, referrer, requisite, rogue, robot, ipnr, fqn, agent, size  )values (strftime('\%s', ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") or die;
+my   $insert_sth = $dbh->prepare("insert into log (t, method, path, status, referrer, requisite, rogue, robot, ipnr, fqn, agent, size  )values (                ? , ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") or die;
+
+my $already_inserted_sth = $dbh->prepare('select count(*) cnt from log where t = :1 and ipnr = :2 and path = :3 and method = :4') or die;
 
 my $start_t = time;
 
@@ -38,7 +46,8 @@ sub load_log_file {
   open (my $log_h, '<', $log_f) or die "could not open $log_f";
 
   while (my $log_l = <$log_h>) {
-    $rec_cnt++;
+
+    my $do_insert = 1;
 
 
     my $rogue = 0;
@@ -46,13 +55,6 @@ sub load_log_file {
   
     if ( my ($year, $month, $day, $hour, $min, $sec, $ipnr, $method, $path, $http, $status, $size, $referrer, $agent) = $log_l =~ m!^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d) (\d+\.\d+\.\d+\.\d+) "(\w+) (.*) (HTTP/1\.\d)" (\d+) (\d+) "([^"]*)" "([^"]*)"!) {
 
-      if ($parse_robot_from_agent_string) {
-        my $ua = new HTTP::BrowserDetect($agent);
-        $robot = $ua->robot_string || '';
-      }
-
-      $rogue = is_rogue($path);
-  
       my $method_;
       if ($method eq 'GET') {
         $method_ = 'G';
@@ -69,8 +71,62 @@ sub load_log_file {
       else {
         die "method = $method"
       }
-    
-      $insert_sth -> execute("$year-$month-$day $hour:$min:$sec", $method_, $path, int($status), $referrer, $rogue, $robot, $ipnr, $agent, $size);
+
+
+      my $t_line = Time::Piece->strptime("$year-$month-$day $hour:$min:$sec", '%Y-%m-%d %H:%M:%S');
+      
+      my $t =$t_line - $t_1970; 
+
+      $already_inserted_sth -> execute($t, $ipnr, $path, $method_);
+      my $cnt = ($already_inserted_sth -> fetchrow_array)[0];
+
+      if ($t > $t_max_in_log) {
+
+        # if $t > $t_max_in_log then we should find no
+        # record in the db.
+        # If we find one, something has gone terribly wrong, let's
+        # die then:
+
+        die (" t > t_max_in_log %10d  %1d  %-90s %s\n", $t, $cnt, $path, $ipnr) if $cnt > 0;
+      }
+      else {
+
+        # if $t <= $t_max_in_log we check if there is a missing record in
+        # the db.
+
+        if ($cnt == 0) {
+        #
+        # Yes, this record seems to be missing
+          printf (" t[$t] <= t_max_in_log[$t_max_in_log] %10d  %1d  %-90s %s\n", $t, $cnt, $path, $ipnr);
+        }
+        else {
+        #
+        # This record was already inserted, as expected
+        # We can skip the insert:
+          $do_insert = 0;
+        }
+
+      }
+
+      if ($do_insert) {
+        if ($parse_robot_from_agent_string) {
+          my $ua = new HTTP::BrowserDetect($agent);
+          $robot = $ua->robot_string || '';
+        }
+  
+        $rogue = is_rogue($path);
+
+        my $fqn = ipnr_2_fqn($ipnr);
+
+        my $requisite = 0;
+        if ($path eq 'favicon.ico' or $path eq '/robots.txt' or $path =~ /\.(png|css|png|jpg|woff|js|gif|php|pdf|ttf)$/) {
+          $requisite = 1;
+        }
+
+      
+        $insert_sth -> execute($t, $method_, $path, int($status), $referrer, $requisite, $rogue, $robot, $ipnr, $fqn, $agent, $size);
+        $rec_cnt++;
+      }
     }
     else {
       die "Could not parse\n$log_l\n";
@@ -103,4 +159,27 @@ sub is_rogue {
   return 1 if uc($path) eq  '/README.txt';
   return 1 if length($path) > 500;
   return 0;
+}
+
+sub ipnr_2_fqn {
+  my $ipnr = shift;
+
+  if (exists $ipnrs{$ipnr}) {
+    return $ipnrs{$ipnr};
+  }
+  my $query = $dns_resolver->query($ipnr, 'PTR');
+
+
+  my $fqn;
+  if ($query) {
+    foreach my $answer ($query->answer) {
+      $fqn =  $answer -> rdatastr;
+    }
+  }
+  else {
+    $fqn =  $dns_resolver->errorstring;
+  }
+
+  $ipnrs{$ipnr} = $fqn;
+  return $fqn;
 }
