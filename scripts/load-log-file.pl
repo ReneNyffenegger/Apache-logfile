@@ -168,11 +168,13 @@ sub is_rogue {
   return 1 if uc($path) eq  '/README.txt';
   return 1 if length($path) > 500;
 
-  return 1 if $referrer = 'http://buttons-for-website.com'                                                                and path = '/';
-  return 1 if $referrer = 'http://buttons-for-your-website.com'                                                           and path = '/';
-  return 1 if $referrer = 'http://burger-imperia.com/'                                                                    and path = '/';
-  return 1 if $referrer = 'http://1-free-share-buttons.com'                                                               and path = '/';
-  return 1 if $referrer = 'http://blog.societyforexcellenceineducation.org/cat-31/india-dissertation-help-writing.html'   and path = '/';
+  $referrer = '' unless $referrer;
+
+  return 1 if $referrer eq 'http://buttons-for-website.com'                                                                and $path eq '/';
+  return 1 if $referrer eq 'http://buttons-for-your-website.com'                                                           and $path eq '/';
+  return 1 if $referrer eq 'http://burger-imperia.com/'                                                                    and $path eq '/';
+  return 1 if $referrer eq 'http://1-free-share-buttons.com'                                                               and $path eq '/';
+  return 1 if $referrer eq 'http://blog.societyforexcellenceineducation.org/cat-31/india-dissertation-help-writing.html'   and $path eq '/';
 
   return 0;
 }
