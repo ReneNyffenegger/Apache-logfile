@@ -2,14 +2,11 @@
 use warnings;
 use strict;
 use Time::HiRes qw(time);
-use Time::Piece;
+# use Time::Piece;
 use HTTP::BrowserDetect;
 use Net::DNS::Resolver;
 
 use ApacheLogDB;
-
-
-my $t_1970 = Time::Piece->strptime('1970-01-01 00:00:00', '%Y-%m-%d %H:%M:%S');
 
 my $parse_robot_from_agent_string = 1;
 
@@ -17,16 +14,19 @@ my $dns_resolver = new Net::DNS::Resolver;
 my %ipnrs;
 
 my $t_max_in_log = ($dbh->selectrow_array('select max(t) from log'))[0];
-print "Max t in log: $t_max_in_log\n";
+printf "Max t in log: $t_max_in_log (%s)\n", t_2_date_string($t_max_in_log);
 
 my $rec_cnt = 0;
 
 # my $insert_sth = $dbh->prepare("insert into log (t, method, path, status, referrer, requisite, rogue, robot, ipnr, fqn, agent, size  )values (strftime('\%s', ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") or die;
 my   $insert_sth = $dbh->prepare("insert into log (t, method, path, status, referrer, requisite, rogue, robot, ipnr, fqn, agent, size  )values (                ? , ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") or die;
 
-my $already_inserted_sth = $dbh->prepare('select count(*) cnt from log where t = :1 and ipnr = :2 and path = :3 and method = :4') or die;
+my $already_inserted_sth = $dbh->prepare('select count(*) cnt from log indexed by log_t_ix where t = :1 and ipnr = :2 and path = :3 and method = :4') or die;
 
 my $start_t = time;
+my $total_t_inserted_sth = 0;
+my $total_t_insert_sth   = 0;
+my $total_t_ipnr2fqn     = 0;
 
 print STDERR "Warning, no files specified\n" unless @ARGV;
 
@@ -36,6 +36,9 @@ while (my $log_f = shift @ARGV) {
 
 my $end_t = time;
 printf("loaded %i records in %5.2f seconds (%7.2f recs/s)\n", $rec_cnt, $end_t - $start_t, $rec_cnt/($end_t - $start_t));
+printf("   %7.4f seconds for sth inserted\n", $total_t_inserted_sth);
+printf("   %7.4f seconds for sth insert\n"  , $total_t_insert_sth);
+printf("   %7.4f seconds for ipnr2fqn\n"    , $total_t_ipnr2fqn);
 
 $dbh -> commit;
 
@@ -55,7 +58,7 @@ sub load_log_file {
   
     if ( my ($year, $month, $day, $hour, $min, $sec, $ipnr, $method, $path, $http, $status, $size, $referrer, $agent) = $log_l =~ m!^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d) (\d+\.\d+\.\d+\.\d+) "(\w+) (.*) (HTTP/1\.\d)" (\d+) (\d+) "([^"]*)" "([^"]*)"!) {
 
-      my $method_;
+      my $method_; # {
       if ($method eq 'GET') {
         $method_ = 'G';
       }
@@ -70,14 +73,18 @@ sub load_log_file {
       }
       else {
         die "method = $method"
-      }
+      } # }
 
 
-      my $t_line = Time::Piece->strptime("$year-$month-$day $hour:$min:$sec", '%Y-%m-%d %H:%M:%S');
-      
-      my $t =$t_line - $t_1970; 
+#     my $t_line = Time::Piece->strptime("$year-$month-$day $hour:$min:$sec", '%Y-%m-%d %H:%M:%S');
+#     my $t =$t_line - $t_1970; 
+      my $t = date_string_2_t("$year-$month-$day $hour:$min:$sec");
 
+      my $sth_inserted_start_t = time;
       $already_inserted_sth -> execute($t, $ipnr, $path, $method_);
+      my $sth_inserted_end_t = time;
+      $total_t_inserted_sth += ($sth_inserted_end_t - $sth_inserted_start_t);
+
       my $cnt = ($already_inserted_sth -> fetchrow_array)[0];
 
       if ($t > $t_max_in_log) {
@@ -87,7 +94,24 @@ sub load_log_file {
         # If we find one, something has gone terribly wrong, let's
         # die then:
 
-        die (" t > t_max_in_log %10d  %1d  %-90s %s\n", $t, $cnt, $path, $ipnr) if $cnt > 0;
+        my $t_diff = $t - $t_max_in_log;
+
+        if ($cnt > 0 ) { # {
+
+        # We don't expect to find a record with a t > 0
+
+          printf("
+            
+            t[$t (%s)] > t_max_in_log[$t_max_in_log],
+            Diff: $t_diff
+            File: $log_f
+            Line: $.
+            IP:   $ipnr
+            Path: $path
+            cnt:  $cnt\n\n", t_2_date_string($t));
+
+        } # }
+
       }
       else {
 
@@ -110,7 +134,10 @@ sub load_log_file {
 
       if ($do_insert) {
 
+        my $ipnr2fqn_start_t = time;
         my $fqn = ipnr_2_fqn($ipnr);
+        my $ipnr2fqn_end_t   = time;
+        $total_t_ipnr2fqn += ($ipnr2fqn_end_t - $ipnr2fqn_start_t);
 
         if ($parse_robot_from_agent_string) {
           if ($fqn eq 'spider.tiger.ch.') {
@@ -131,7 +158,11 @@ sub load_log_file {
         }
 
       
+        my $sth_insert_start_t = time;
         $insert_sth -> execute($t, $method_, $path, int($status), $referrer, $requisite, $rogue, $robot, $ipnr, $fqn, $agent, $size);
+        my $sth_insert_end_t = time;
+        $total_t_insert_sth += ($sth_insert_end_t - $sth_insert_start_t);
+
         $rec_cnt++;
       }
     }
