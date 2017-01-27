@@ -30,7 +30,7 @@ sub shorten_fqn { # {
   my $fqn  = shift;
   my $ipnr = shift;
 
-  if ($fqn eq 'SERVFAIL' or $fqn eq 'NXDOMAIN') {
+  if ($fqn eq 'SERVFAIL' or $fqn eq 'NXDOMAIN' or $fqn eq 'NOERROR') {
     $fqn = $ipnr
   }
   elsif ($fqn =~ /\.([^.]+)\.([^.]+)\.$/) {
