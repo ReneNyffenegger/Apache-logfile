@@ -114,6 +114,8 @@ elsif ($show_id) { #  {
       rogue,
       requisite,
       robot,
+      gip_country,
+      gip_city,
       ipnr,
       fqn,
       agent,
@@ -139,6 +141,7 @@ elsif ($show_id) { #  {
   printf "  status:   %d\n"      , $r->{status};
   printf "  referrer: %s\n"      , $r->{referrer};
   printf "  robot:    %s\n"      , $r->{robot};
+  printf "  Geo::IP:  %s %s\n"   , $r->{gip_country}, $r->{gip_city};
   printf "  ipnr:     %s %s\n"   , $r->{ipnr}, $r->{fqn};
   printf "  agent:    %s\n"      , $r->{agent};
   printf "  rog/req:  %d %d\n"   , $r->{rogue}, $r->{requisite};
@@ -227,6 +230,8 @@ sub query_flat {
     select
       id,
       $tm(t, 'unixepoch') tm,
+      gip_country,
+      gip_city,
       ipnr,
       fqn,
       path,
@@ -247,7 +252,7 @@ sub query_flat {
 
   while (my $r = $sth -> fetchrow_hashref) {
     my $fqn = shorten_fqn($r->{fqn}, $r->{ipnr});
-    printf("%6d  %s  %-80s %-20s %s\n", $r->{id}, $r->{tm}, $r->{path}, $fqn, $r->{referrer});
+    printf("%6d  %s  %-80s %-20s %s %-20s %s\n", $r->{id}, $r->{tm}, $r->{path}, $fqn, $r->{gip_country}, $r->{gip_city}, $r->{referrer});
   }
 
 }

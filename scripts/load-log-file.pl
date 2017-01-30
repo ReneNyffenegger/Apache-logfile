@@ -5,21 +5,27 @@ use Time::HiRes qw(time);
 # use Time::Piece;
 use HTTP::BrowserDetect;
 use Net::DNS::Resolver;
+use Geo::IP;
 
 use ApacheLogDB;
+
+my $geo_ip_file = '/usr/local/share/GeoIP/GeoIPCity.dat';
+my $geo_ip_file_age_s = (stat($geo_ip_file))[9];
+printf "$geo_ip_file is %.1f days old\n", (time - $geo_ip_file_age_s) / 24 / 3600;
 
 my $parse_robot_from_agent_string = 1;
 
 my $dns_resolver = new Net::DNS::Resolver;
 my %ipnrs;
 
+my $geoip   = Geo::IP->open($geo_ip_file, GEOIP_STANDARD) or die;
+
 my $t_max_in_log = ($dbh->selectrow_array('select max(t) from log'))[0];
 printf "Max t in log: $t_max_in_log (%s)\n", t_2_date_string($t_max_in_log);
 
 my $rec_cnt = 0;
 
-# my $insert_sth = $dbh->prepare("insert into log (t, method, path, status, referrer, requisite, rogue, robot, ipnr, fqn, agent, size  )values (strftime('\%s', ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") or die;
-my   $insert_sth = $dbh->prepare("insert into log (t, method, path, status, referrer, requisite, rogue, robot, ipnr, fqn, agent, size  )values (                ? , ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") or die;
+my   $insert_sth = $dbh->prepare("insert into log (t, method, path, status, referrer, requisite, rogue, robot, gip_country, gip_city, ipnr, fqn, agent, size  )values (?, ?, ? , ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") or die;
 
 my $already_inserted_sth = $dbh->prepare('select count(*) cnt from log indexed by log_t_ix where t = :1 and ipnr = :2 and path = :3 and method = :4') or die;
 
@@ -157,9 +163,12 @@ sub load_log_file {
           $requisite = 1;
         }
 
+        my $gip_rec     = $geoip->record_by_addr($ipnr);
+        my $gip_country = $gip_rec->{country_code};
+        my $gip_city    = $gip_rec->{city};
       
         my $sth_insert_start_t = time;
-        $insert_sth -> execute($t, $method_, $path, int($status), $referrer, $requisite, $rogue, $robot, $ipnr, $fqn, $agent, $size);
+        $insert_sth -> execute($t, $method_, $path, int($status), $referrer, $requisite, $rogue, $robot, $gip_country, $gip_city, $ipnr, $fqn, $agent, $size);
         my $sth_insert_end_t = time;
         $total_t_insert_sth += ($sth_insert_end_t - $sth_insert_start_t);
 
