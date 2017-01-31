@@ -9,7 +9,7 @@ use Time::Piece;
 use DBI;
 
 our @ISA = 'Exporter';
-our @EXPORT = qw( $dbh shorten_fqn t_2_date_string date_string_2_t);
+our @EXPORT = qw( $dbh shorten_fqn t_2_date_string date_string_2_t t_now);
 our $dbh;
 my  $t_1970;
 
@@ -46,12 +46,20 @@ sub t_2_date_string { # {
   return $t_ -> ymd() . ' ' . $t_ -> hms();
 } # }
 
-sub date_string_2_t {
+sub date_string_2_t { # {
 
   my $date_string = shift;
 
   my $t_ = Time::Piece->strptime($date_string, '%Y-%m-%d %H:%M:%S');
 
   return $t_ - $t_1970;
-}
+} # }
+
+sub t_now { # {
+
+  my $t = localtime;
+  return $t - $t_1970;
+
+} #  }
+
 1;

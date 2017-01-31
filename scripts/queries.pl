@@ -17,9 +17,9 @@ Getopt::Long::GetOptions (
   "day:s"                   => \my $show_day,
   "id:i"                    => \my $show_id,
   "fqn:s"                   => \my $show_fqn,
-  "order-by-count"          => \my $order_by_cnt
+  "order-by-count"          => \my $order_by_cnt,
+  "hours:i"                 => \my $hours,
 ) or die;
-
 
 # my $sth = $dbh -> prepare ("
 #   select
@@ -89,6 +89,16 @@ elsif ($show_day) { #  {
   query_flat(
       'time', 
       "date(t, 'unixepoch') = :1", $show_day
+  );
+
+} #  }
+elsif ($hours) { #  {
+
+  my $t_ = t_now() - 60*60 * $hours;
+
+  query_flat(
+      'datetime', 
+      "t>=:1",  $t_
   );
 
 } #  }
@@ -239,9 +249,10 @@ sub query_flat {
     from
       log
     where
-      robot     = '' and
-      rogue     = 0  and
-      requisite = 0  and
+      robot     = ''                and
+      rogue     = 0                 and
+      requisite = 0                 and
+      agent    !='Mozilla/5.0 (TQ)' and
       $where
     order by
       t
