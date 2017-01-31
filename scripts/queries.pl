@@ -15,10 +15,11 @@ use Getopt::Long;
 Getopt::Long::GetOptions (
   "count-per-day"           => \my $count_per_day,
   "day:s"                   => \my $show_day,
+  "hours:i"                 => \my $hours,
   "id:i"                    => \my $show_id,
   "fqn:s"                   => \my $show_fqn,
   "order-by-count"          => \my $order_by_cnt,
-  "hours:i"                 => \my $hours,
+  "tq-not-filtered"         => \my $tq_not_filtered,
 ) or die;
 
 # my $sth = $dbh -> prepare ("
@@ -236,6 +237,9 @@ sub query_flat {
   my $where_val = shift;
 
 
+  my $where_agent = '1=1';
+     $where_agent = "agent != 'Mozilla/5.0 (TQ)'" unless $tq_not_filtered;
+
   my $sth = $dbh -> prepare ("
     select
       id,
@@ -252,7 +256,7 @@ sub query_flat {
       robot     = ''                and
       rogue     = 0                 and
       requisite = 0                 and
-      agent    !='Mozilla/5.0 (TQ)' and
+      $where_agent                  and
       $where
     order by
       t
