@@ -16,6 +16,7 @@ Getopt::Long::GetOptions (
   "count-per-day"           => \my $count_per_day,
   "day:s"                   => \my $show_day,
   "hours:i"                 => \my $hours,
+  "last-days:i"             => \my $last_days,
   "id:i"                    => \my $show_id,
   "fqn:s"                   => \my $show_fqn,
   "order-by-count"          => \my $order_by_cnt,
@@ -96,6 +97,16 @@ elsif ($show_day) { #  {
 elsif ($hours) { #  {
 
   my $t_ = t_now() - 60*60 * $hours;
+
+  query_flat(
+      'datetime', 
+      "t>=:1",  $t_
+  );
+
+} #  }
+elsif ($last_days) { #  {
+
+  my $t_ = t_now() - 60*60 * 24* $last_days;
 
   query_flat(
       'datetime', 
