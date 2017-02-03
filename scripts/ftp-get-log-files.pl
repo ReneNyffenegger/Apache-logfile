@@ -3,11 +3,17 @@ use warnings;
 use strict;
 use Archive::Extract;
 use Time::Piece;
+use Getopt::Long;
 use File::Copy;
 use lib "$ENV{github_top_root}lib/tq84-PerlModules";
 use tq84_ftp;
 
-my $get_last_month = 0; 
+GetOptions('last-month'  => \my $get_last_month) or die;
+
+print "getting last month too\n" if $get_last_month;
+exit;
+
+
 my $verbose        = 1;
 my $archive_dir    = "$ENV{digitales_backup}renenyffenegger.ch/logs/archive/";
 
