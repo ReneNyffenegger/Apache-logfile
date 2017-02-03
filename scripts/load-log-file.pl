@@ -149,6 +149,9 @@ sub load_log_file {
           if ($fqn eq 'spider.tiger.ch.') {
             $robot = 'spider.tiger.ch';
           }
+          elsif ($referrer eq 'http://semalt.semalt.com/crawler.php?u=http://renenyffenegger.ch') {
+            $robot = 'semalt.com';
+          }
           else {
             my $ua = new HTTP::BrowserDetect($agent);
             $robot = $ua->robot_string || '';
