@@ -15,36 +15,15 @@ use Getopt::Long;
 Getopt::Long::GetOptions (
   "count-per-day"           => \my $count_per_day,
   "day:s"                   => \my $show_day,
-  "hours:i"                 => \my $hours,
-  "last-days:i"             => \my $last_days,
-  "id:i"                    => \my $show_id,
   "fqn:s"                   => \my $show_fqn,
+  "hours:i"                 => \my $hours,
+  "id:i"                    => \my $show_id,
+  "last-days:i"             => \my $last_days,
+  "referrers"               => \my $referrers,
   "order-by-count"          => \my $order_by_cnt,
   "tq-not-filtered"         => \my $tq_not_filtered,
 ) or die;
 
-# my $sth = $dbh -> prepare ("
-#   select
-#     count(*) cnt,
-#     min(path) path_min,
-#     max(path) path_max,
-#     referrer
-#   from
-#     log
-#   where
-#     rogue    = 0         and
-#     robot    = ''        and
-#     referrer is not null and
-#     referrer not like '\%renenyffenegger.ch\%' and
-#     referrer like '%google%search?%'
-#   group by
-#     referrer
-#   order by
-#     count(*)");
-# $sth -> execute;
-# while (my $r = $sth -> fetchrow_hashref) {
-#    printf("%6i %-50s %-50s %s\n", $r->{cnt}, $r->{path_min}, $r->{path_max}, $r->{referrer});
-# }
 
 # my $sth = $dbh -> prepare ("select count(*) cnt, path from log where referrer like '\%google.\%' group by path order by count(*)");
 # $sth -> execute;
@@ -66,6 +45,8 @@ if ($count_per_day) { # {
      $order_by = "count(*)";
   }
 
+  my $where_def = where();
+
   my $sth = $dbh -> prepare ("
      select
        count(*) cnt,
@@ -73,8 +54,7 @@ if ($count_per_day) { # {
      from
        log
      where
-       robot = '' and
-       rogue = 0
+       $where_def
      group by
        date(t, 'unixepoch')
      order by
@@ -86,6 +66,46 @@ if ($count_per_day) { # {
   }
 
 } # }
+elsif ($referrers) { #  {
+
+  my $where_def = where();
+
+  my $path_width     = 70;
+  my $referrer_width = 90;
+
+  my $sth = $dbh-> prepare ("
+    select
+      count(*)   cnt,
+      min(path)  path_min,
+      max(path)  path_max,
+      referrer
+    from
+      log
+    where
+      $where_def                                           and
+      referrer <> '-'                                      and
+      referrer not like 'http://renenyffenegger.%'         and
+      referrer not like 'http://www.renenyffenegger.ch%'   and
+      referrer not like 'http://www.adp-gmbh.ch%'          and
+      referrer not like 'http://adp-gmbh.ch%'              and
+      referrer not like 'http://www.google.%'              and
+      referrer not like 'https://www.google.%'             and
+      referrer not like 'http://yandex.ru/%'               and
+      referrer not like 'https://t.co/%'                   and
+      referrer not like 'https://translate.googleusercontent.com/%'
+    group by
+      referrer
+    order by
+      count(*) desc
+  ");
+
+  $sth -> execute;
+
+  while (my $r = $sth -> fetchrow_hashref) {
+    printf("%6i %-${path_width}s %-${path_width}s %s\n", $r->{cnt}, substr($r->{path_min}, 0, $path_width), substr($r->{path_max}, 0, $path_width), substr($r->{referrer}, 0, $referrer_width));
+  }
+
+} #  }
 elsif ($show_day) { #  {
 
   query_flat(
@@ -106,11 +126,11 @@ elsif ($hours) { #  {
 } #  }
 elsif ($last_days) { #  {
 
-  my $t_ = t_now() - 60*60 * 24* $last_days;
+# my $t_ = t_now() - 60*60 * 24* $last_days;
 
   query_flat(
       'datetime', 
-      "t>=:1",  $t_
+      "'a'=:1", 'a'
   );
 
 } #  }
@@ -244,12 +264,11 @@ elsif ($show_id) { #  {
 sub query_flat {
 
   my $tm        = shift;
-  my $where     = shift;
+  my $where_add = shift;
   my $where_val = shift;
 
+  my $where_def = where();
 
-  my $where_agent = '1=1';
-     $where_agent = "agent != 'Mozilla/5.0 (TQ)'" unless $tq_not_filtered;
 
   my $sth = $dbh -> prepare ("
     select
@@ -264,11 +283,8 @@ sub query_flat {
     from
       log
     where
-      robot     = ''                and
-      rogue     = 0                 and
-      requisite = 0                 and
-      $where_agent                  and
-      $where
+      $where_def and
+      $where_add
     order by
       t
   ");
@@ -280,5 +296,26 @@ sub query_flat {
     my $fqn = shorten_fqn($r->{fqn}, $r->{ipnr});
     printf("%6d  %s  %-80s %-20s %s %-20s %s\n", $r->{id}, $r->{tm}, $r->{path}, $fqn, $r->{gip_country}, $r->{gip_city}, $r->{referrer});
   }
+
+}
+
+sub where {
+
+  my $where_agent = '1=1';
+     $where_agent = "agent != 'Mozilla/5.0 (TQ)'" unless $tq_not_filtered;
+
+
+  my $where = "
+   robot     = ''      and
+   rogue     =  0      and
+   requisite =  0      and
+   $where_agent ";
+
+   if ($last_days) {
+      my $t_ = t_now() - 60*60 * 24* $last_days;
+      $where .= "  and t > $t_ "
+   }
+
+  return $where;
 
 }
