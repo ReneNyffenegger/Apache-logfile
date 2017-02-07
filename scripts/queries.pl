@@ -6,11 +6,6 @@ use DBI;
 use ApacheLogDB;
 use Getopt::Long;
 
-# my $db = 'ApacheLogfile.db';
-# 
-# die unless -e $db;
-# my $dbh = DBI->connect("dbi:SQLite:dbname=$db") or die "$db does not exist";
-
 
 Getopt::Long::GetOptions (
   "count-per-day"           => \my $count_per_day,
@@ -19,23 +14,12 @@ Getopt::Long::GetOptions (
   "hours:i"                 => \my $hours,
   "id:i"                    => \my $show_id,
   "last-days:i"             => \my $last_days,
+  "most-accessed"           => \my $most_accessed,
   "referrers"               => \my $referrers,
   "order-by-count"          => \my $order_by_cnt,
   "tq-not-filtered"         => \my $tq_not_filtered,
 ) or die;
 
-
-# my $sth = $dbh -> prepare ("select count(*) cnt, path from log where referrer like '\%google.\%' group by path order by count(*)");
-# $sth -> execute;
-# while (my $r = $sth -> fetchrow_hashref) {
-#    printf("%6i %s\n", $r->{cnt}, $r->{path});
-# }
-
-# my $sth = $dbh -> prepare ("select count(*) cnt, path from log group by path order by count(*)");
-# $sth -> execute;
-# while (my $r = $sth -> fetchrow_hashref) {
-#    printf("%6i %s\n", $r->{cnt}, $r->{path});
-# }
 
 if ($count_per_day) { # {
 
@@ -65,6 +49,30 @@ if ($count_per_day) { # {
      printf("%6i %s\n", $r->{cnt}, $r->{dt});
   }
 
+} # }
+elsif ($most_accessed) { # {
+  
+  my $where_def = where();
+
+  my $sth = $dbh -> prepare ("
+    select
+      count(*)  cnt,
+      path
+    from
+      log
+    where
+      $where_def
+    group by
+      path
+    order by
+      cnt
+");
+  
+  $sth -> execute;
+
+  while (my $r = $sth -> fetchrow_hashref) {
+     printf("%6i %s\n", $r->{cnt}, $r->{path});
+  }
 } # }
 elsif ($referrers) { #  {
 

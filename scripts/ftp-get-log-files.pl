@@ -11,8 +11,6 @@ use tq84_ftp;
 GetOptions('last-month'  => \my $get_last_month) or die;
 
 print "getting last month too\n" if $get_last_month;
-exit;
-
 
 my $verbose        = 1;
 my $archive_dir    = "$ENV{digitales_backup}renenyffenegger.ch/logs/archive/";

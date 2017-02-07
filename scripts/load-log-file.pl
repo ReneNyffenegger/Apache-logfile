@@ -34,10 +34,10 @@ my $total_t_inserted_sth = 0;
 my $total_t_insert_sth   = 0;
 my $total_t_ipnr2fqn     = 0;
 
-print STDERR "Warning, no files specified\n" unless @ARGV;
+my @files = qw(access_log access_log.processed);
 
-while (my $log_f = shift @ARGV) {
-  load_log_file($log_f);
+while (my $log_f = shift @files) {
+  load_log_file("$ENV{digitales_backup}renenyffenegger.ch/logs/archive/$log_f");
 }
 
 my $end_t = time;
@@ -104,17 +104,15 @@ sub load_log_file {
 
         if ($cnt > 0 ) { # {
 
-        # We don't expect to find a record with a t > 0
-
-          printf("
-            
-            t[$t (%s)] > t_max_in_log[$t_max_in_log],
-            Diff: $t_diff
-            File: $log_f
-            Line: $.
-            IP:   $ipnr
-            Path: $path
-            cnt:  $cnt\n\n", t_2_date_string($t));
+#         printf("
+#           
+#           t[$t (%s)] > t_max_in_log[$t_max_in_log],
+#           Diff: $t_diff
+#           File: $log_f
+#           Line: $.
+#           IP:   $ipnr
+#           Path: $path
+#           cnt:  $cnt\n\n", t_2_date_string($t));
 
         } # }
 
