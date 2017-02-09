@@ -211,11 +211,17 @@ sub is_rogue {
 
   $referrer = '' unless $referrer;
 
-  return 1 if $referrer eq 'http://buttons-for-website.com'                                                                and $path eq '/';
-  return 1 if $referrer eq 'http://buttons-for-your-website.com'                                                           and $path eq '/';
-  return 1 if $referrer eq 'http://burger-imperia.com/'                                                                    and $path eq '/';
-  return 1 if $referrer eq 'http://1-free-share-buttons.com'                                                               and $path eq '/';
-  return 1 if $referrer eq 'http://blog.societyforexcellenceineducation.org/cat-31/india-dissertation-help-writing.html'   and $path eq '/';
+  return 1 if $referrer eq   'http://buttons-for-website.com'                                                                and $path eq '/';
+  return 1 if $referrer eq   'http://buttons-for-your-website.com'                                                           and $path eq '/';
+  return 1 if $referrer eq   'http://burger-imperia.com/'                                                                    and $path eq '/';
+  return 1 if $referrer eq   'http://1-free-share-buttons.com'                                                               and $path eq '/';
+  return 1 if $referrer eq   'http://blog.societyforexcellenceineducation.org/cat-31/india-dissertation-help-writing.html'   and $path eq '/';
+  return 1 if $referrer =~m !^http://www.combib.de/!;
+  return 1 if $referrer =~m !^http://www.biblestudytools.com!;
+  return 1 if $referrer =~m !^http://www.firmenpresse.de/!;
+  return 1 if $referrer =~m !^http://www.viandpet.com/!;    
+  return 1 if $referrer =~m !^http://www.bible.com/!;       
+  return 1 if $referrer =~m !^http://www.obohu.cz/!;       
 
   return 0;
 }
