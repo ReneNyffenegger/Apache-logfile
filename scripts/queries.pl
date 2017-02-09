@@ -18,8 +18,13 @@ Getopt::Long::GetOptions (
   "referrers"               => \my $referrers,
   "order-by-count"          => \my $order_by_cnt,
   "tq-not-filtered"         => \my $tq_not_filtered,
+  "what"                    => \my $what
 ) or die;
 
+if ($what) {
+  usage();
+  exit();
+}
 
 if ($count_per_day) { # {
 
@@ -326,4 +331,20 @@ sub where {
 
   return $where;
 
+}
+
+sub usage {
+
+  print "
+  --count-per-day     [ --order-by-count ]
+  --day:s
+  --fqn:s
+  --hours:i
+  --id:i
+  --last-days:i
+  --most-accessed
+  --referrers
+  --tq-not-filtered
+  --what
+";
 }
