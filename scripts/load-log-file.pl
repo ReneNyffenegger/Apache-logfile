@@ -156,7 +156,7 @@ sub load_log_file {
           }
         }
   
-        $rogue = is_rogue($path);
+        $rogue = is_rogue($path, $referrer);
 
 
         my $requisite = 0;
@@ -197,6 +197,7 @@ sub is_rogue {
   return 1 if $path =~ m!^/joomla!;
   return 1 if $path =~ m!/editor.*/editor/!;
   return 1 if $path =~ m!^/editor/!;
+  return 1 if $path =~ m!^/index\.php!;
   return 1 if $path =~ m!/wp-!;
   return 1 if $path =~ m!^/admin/.*\.sql$!;
   return 1 if $path =~ m!^/license\.!;
@@ -205,15 +206,35 @@ sub is_rogue {
   return 1 if $path =~ m!^/xmlrpc.php!;
   return 1 if $path =~ m!^/kcfinder/!;
   return 1 if $path =~ m!^/tiki!;
+  return 1 if $path =~ m!^/www\.sql\.!;
+  return 1 if $path =~ m!^/web\.sql\.!;
+  return 1 if $path =~ m!^/users\.!;
+  return 1 if $path =~ m!^/upload\.!;
+  return 1 if $path =~ m!^/temp\.!;
+  return 1 if $path =~ m!^/sql\.!;
+  return 1 if $path =~ m!^/site\.!;
+  return 1 if $path =~ m!^/home\.!;
+  return 1 if $path =~ m!^/mysql\.!;
+  return 1 if $path =~ m!^/dbase\.!;
+  return 1 if $path =~ m!^/dump\.!;
+  return 1 if $path =~ m!^/data\.!;
+  return 1 if $path =~ m!^/dbdump\.!;
+  return 1 if $path =~ m!^/dbadmin\.!;
+  return 1 if $path =~ m!^/backup\.!;
+  return 1 if $path =~ m!^/db\.!;
   return 1 if $path eq  '/wp/';
   return 1 if uc($path) eq  '/README.txt';
   return 1 if length($path) > 500;
 
   $referrer = '' unless $referrer;
 
+  return 1 if $referrer eq   'http://rebelmouse.com/'                                                                        and $path eq '/';
   return 1 if $referrer eq   'http://buttons-for-website.com'                                                                and $path eq '/';
+  return 1 if $referrer eq   'http://www.webwiki.ch/www.renenyffenegger.ch'                                                  and $path eq '/';
+  return 1 if $referrer eq   'http://1-99seo.com/try.php?u=http://renenyffenegger.ch'                                        and $path eq '/';
   return 1 if $referrer eq   'http://buttons-for-your-website.com'                                                           and $path eq '/';
   return 1 if $referrer eq   'http://burger-imperia.com/'                                                                    and $path eq '/';
+  return 1 if $referrer =~m !^http://success-seo-com/!                                                                       and $path eq '/';
   return 1 if $referrer eq   'http://1-free-share-buttons.com'                                                               and $path eq '/';
   return 1 if $referrer eq   'http://blog.societyforexcellenceineducation.org/cat-31/india-dissertation-help-writing.html'   and $path eq '/';
   return 1 if $referrer =~m !^http://www.combib.de/!;

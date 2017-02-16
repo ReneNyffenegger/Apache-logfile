@@ -7,7 +7,7 @@ use ApacheLogDB;
 use Getopt::Long;
 
 
-Getopt::Long::GetOptions (
+Getopt::Long::GetOptions ( #_{
   "count-per-day"           => \my $count_per_day,
   "day:s"                   => \my $show_day,
   "fqn:s"                   => \my $show_fqn,
@@ -19,14 +19,14 @@ Getopt::Long::GetOptions (
   "order-by-count"          => \my $order_by_cnt,
   "tq-not-filtered"         => \my $tq_not_filtered,
   "what"                    => \my $what
-) or die;
+) or die; #_}
 
 if ($what) {
   usage();
   exit();
 }
 
-if ($count_per_day) { # {
+if ($count_per_day) { #_{
 
   my $order_by = "date(t, 'unixepoch')";
 
@@ -54,8 +54,8 @@ if ($count_per_day) { # {
      printf("%6i %s\n", $r->{cnt}, $r->{dt});
   }
 
-} # }
-elsif ($most_accessed) { # {
+} #_}
+elsif ($most_accessed) { #_{
   
   my $where_def = where();
 
@@ -78,8 +78,8 @@ elsif ($most_accessed) { # {
   while (my $r = $sth -> fetchrow_hashref) {
      printf("%6i %s\n", $r->{cnt}, $r->{path});
   }
-} # }
-elsif ($referrers) { #  {
+} #_}
+elsif ($referrers) { #_{
 
   my $where_def = where();
 
@@ -109,7 +109,7 @@ elsif ($referrers) { #  {
     group by
       referrer
     order by
-      count(*) desc
+      count(*)
   ");
 
   $sth -> execute;
@@ -118,16 +118,16 @@ elsif ($referrers) { #  {
     printf("%6i %-${path_width}s %-${path_width}s %s\n", $r->{cnt}, substr($r->{path_min}, 0, $path_width), substr($r->{path_max}, 0, $path_width), substr($r->{referrer}, 0, $referrer_width));
   }
 
-} #  }
-elsif ($show_day) { #  {
+} #_}
+elsif ($show_day) { #_{
 
   query_flat(
       'time', 
       "date(t, 'unixepoch') = :1", $show_day
   );
 
-} #  }
-elsif ($hours) { #  {
+} #_}
+elsif ($hours) { #_{
 
   my $t_ = t_now() - 60*60 * $hours;
 
@@ -136,8 +136,8 @@ elsif ($hours) { #  {
       "t>=:1",  $t_
   );
 
-} #  }
-elsif ($last_days) { #  {
+} #_}
+elsif ($last_days) { #_{
 
 # my $t_ = t_now() - 60*60 * 24* $last_days;
 
@@ -146,8 +146,8 @@ elsif ($last_days) { #  {
       "'a'=:1", 'a'
   );
 
-} #  }
-elsif ($show_fqn) { #  {
+} #_}
+elsif ($show_fqn) { #_{
 
   query_flat(
      'datetime',
@@ -155,8 +155,8 @@ elsif ($show_fqn) { #  {
   );
 
 
-} #  }
-elsif ($show_id) { #  {
+} #_}
+elsif ($show_id) { #_{
 
   my $sth = $dbh -> prepare ("
     select
@@ -202,25 +202,25 @@ elsif ($show_id) { #  {
   printf "  rog/req:  %d %d\n"   , $r->{rogue}, $r->{requisite};
   printf "  size:     %s\n"      , $r->{size};
   
-} #  }
+} #_}
 
 # my $sth = $dbh -> prepare ("select count(*) cnt, path from log where t between strftime('\%s', ?) and strftime('\%s', ?) group by path order by count(*)");
 # $sth -> execute('2016-12-06', '2016-12-07');
 # while (my $r = $sth -> fetchrow_hashref) {
 #    printf("%6i %s\n", $r->{cnt}, $r->{path});
-# }
+#_}
 
 # my $sth = $dbh -> prepare ("select count(*) cnt, agent from log where t between strftime('\%s', ?) and strftime('\%s', ?) group by agent order by count(*)");
 # $sth -> execute('2016-12-06', '2016-12-07');
 # while (my $r = $sth -> fetchrow_hashref) {
 #    printf("%6i %s\n", $r->{cnt}, $r->{agent});
-# }
+#_}
 
 # my $sth = $dbh -> prepare ("select count(*) cnt, agent from log  group by agent order by count(*)");
 # $sth -> execute;
 # while (my $r = $sth -> fetchrow_hashref) {
 #    printf("%6i %s\n", $r->{cnt}, $r->{agent});
-# }
+#_}
 
 
 # my $sth = $dbh -> prepare ("select
@@ -244,13 +244,13 @@ elsif ($show_id) { #  {
 # $sth -> execute;
 # while (my $r = $sth -> fetchrow_hashref) {
 #    printf("%6i %3d %d %s\n", $r->{cnt}, $r->{status}, $r->{robot}, $r->{path});
-# }
+#_}
 
 # my $sth = $dbh -> prepare ("select count(*) cnt, robot from log  group by robot order by count(*)");
 # $sth -> execute;
 # while (my $r = $sth -> fetchrow_hashref) {
 #    printf("%6i  %s\n", $r->{cnt}, $r->{robot});
-# }
+#_}
 
 # my $sth = $dbh -> prepare ("
 #   select
@@ -271,7 +271,7 @@ elsif ($show_id) { #  {
 # $sth -> execute;
 # while (my $r = $sth -> fetchrow_hashref) {
 #    printf("%3i  %15s  %s\n", $r->{cnt}, $r->{ipnr}, $r->{agent});
-# }
+#_}
 
 
 sub query_flat {
