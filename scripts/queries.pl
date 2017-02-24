@@ -6,6 +6,12 @@ use DBI;
 use ApacheLogDB;
 use Getopt::Long;
 
+unless (@ARGV) {
+
+  usage();
+  exit();
+
+}
 
 Getopt::Long::GetOptions ( #_{
   "count-per-day"           => \my $count_per_day,
