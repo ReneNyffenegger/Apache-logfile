@@ -156,7 +156,7 @@ sub load_log_file {
           }
         }
   
-        $rogue = is_rogue($path, $referrer);
+        $rogue = is_rogue($path, $referrer, $ipnr);
 
 
         my $requisite = 0;
@@ -186,6 +186,7 @@ sub load_log_file {
 sub is_rogue {
   my $path     = shift;
   my $referrer = shift;
+  my $ipnr     = shift;
 
   return 1 if $path =~ m!/[Ff]?ckeditor!;
   return 1 if $path =~ m!/typo3/!;
@@ -243,6 +244,8 @@ sub is_rogue {
   return 1 if $referrer =~m !^http://www.viandpet.com/!;    
   return 1 if $referrer =~m !^http://www.bible.com/!;       
   return 1 if $referrer =~m !^http://www.obohu.cz/!;       
+
+  return 1 if $ipnr    eq '185.81.157.145'; # 2017-02-28
 
   return 0;
 }
