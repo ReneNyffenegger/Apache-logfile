@@ -6,8 +6,20 @@ use Time::HiRes qw(time);
 use HTTP::BrowserDetect;
 use Net::DNS::Resolver;
 use Geo::IP;
+use Getopt::Long;
+use Time::Piece;
 
 use ApacheLogDB;
+
+GetOptions('last-month'  => \my $get_last_month) or die;
+
+my @files = qw(access_log access_log.processed);
+if ($get_last_month) {
+    my $date_time = new Time::Piece;
+    my $month = $date_time->add_months(- 1); # Subtract one month
+    my $archive_file_name = $month->strftime('access_log.%Y_%m');
+    push @files, $archive_file_name;
+}
 
 my $geo_ip_file = '/usr/local/share/GeoIP/GeoIPCity.dat';
 my $geo_ip_file_age_s = (stat($geo_ip_file))[9];
@@ -34,7 +46,6 @@ my $total_t_inserted_sth = 0;
 my $total_t_insert_sth   = 0;
 my $total_t_ipnr2fqn     = 0;
 
-my @files = qw(access_log access_log.processed);
 
 while (my $log_f = shift @files) {
   load_log_file("$ENV{digitales_backup}renenyffenegger.ch/logs/archive/$log_f");
@@ -57,7 +68,6 @@ sub load_log_file {
   while (my $log_l = <$log_h>) {
 
     my $do_insert = 1;
-
 
     my $rogue = 0;
     my $robot = '';
