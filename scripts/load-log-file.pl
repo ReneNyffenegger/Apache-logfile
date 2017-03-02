@@ -52,14 +52,17 @@ while (my $log_f = shift @files) {
 }
 
 my $end_t = time;
+
+$dbh -> do("insert into load_hist values($start_t, $end_t, $t_max_in_log)");
+$dbh -> commit;
+
 printf("loaded %i records in %5.2f seconds (%7.2f recs/s)\n", $rec_cnt, $end_t - $start_t, $rec_cnt/($end_t - $start_t));
 printf("   %7.4f seconds for sth inserted\n", $total_t_inserted_sth);
 printf("   %7.4f seconds for sth insert\n"  , $total_t_insert_sth);
 printf("   %7.4f seconds for ipnr2fqn\n"    , $total_t_ipnr2fqn);
 
-$dbh -> commit;
 
-sub load_log_file {
+sub load_log_file { #_{
   my $log_f = shift;
   print "Loading $log_f\n";
 
@@ -192,8 +195,8 @@ sub load_log_file {
   
   }
 
-}
-sub is_rogue {
+} #_}
+sub is_rogue { #_{
   my $path     = shift;
   my $referrer = shift;
   my $ipnr     = shift;
@@ -258,9 +261,9 @@ sub is_rogue {
   return 1 if $ipnr    eq '185.81.157.145'; # 2017-02-28
 
   return 0;
-}
+} #_}
 
-sub ipnr_2_fqn {
+sub ipnr_2_fqn { #_{
   my $ipnr = shift;
 
   if (exists $ipnrs{$ipnr}) {
@@ -281,4 +284,4 @@ sub ipnr_2_fqn {
 
   $ipnrs{$ipnr} = $fqn;
   return $fqn;
-}
+} #_}
