@@ -201,7 +201,7 @@ sub is_rogue { #_{
   my $referrer = shift;
   my $ipnr     = shift;
 
-  return 1 if $path =~ m!/[Ff]?ckeditor!;
+  return 1 if $path =~ m!/[Ff]?ckeditor!; #_{
   return 1 if $path =~ m!/typo3/!;
   return 1 if $path =~ m!^/wordpress/!;
   return 1 if $path =~ m!^/scripts/!;
@@ -239,10 +239,10 @@ sub is_rogue { #_{
   return 1 if $path eq  '/wp/';
   return 1 if uc($path) eq  '/README.txt';
   return 1 if length($path) > 500;
-
+ #_}
   $referrer = '' unless $referrer;
 
-  return 1 if $referrer eq   'http://rebelmouse.com/'                                                                        and $path eq '/';
+  return 1 if $referrer eq   'http://rebelmouse.com/'                                                                        and $path eq '/'; #_{
   return 1 if $referrer eq   'http://buttons-for-website.com'                                                                and $path eq '/';
   return 1 if $referrer eq   'http://www.webwiki.ch/www.renenyffenegger.ch'                                                  and $path eq '/';
   return 1 if $referrer eq   'http://1-99seo.com/try.php?u=http://renenyffenegger.ch'                                        and $path eq '/';
@@ -257,6 +257,9 @@ sub is_rogue { #_{
   return 1 if $referrer =~m !^http://www.viandpet.com/!;    
   return 1 if $referrer =~m !^http://www.bible.com/!;       
   return 1 if $referrer =~m !^http://www.obohu.cz/!;       
+ #_}
+
+  return 1 if $path eq '/notes/development/languages/Perl/modules/WWW/Mechanize/Firefox/index/'  and $referrer =~ m|\.ru/$|;
 
   return 1 if $ipnr    eq '185.81.157.145'; # 2017-02-28
 

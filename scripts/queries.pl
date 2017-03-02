@@ -23,6 +23,7 @@ Getopt::Long::GetOptions ( #_{
   "most-accessed"           => \my $most_accessed,
   "referrers"               => \my $referrers,
   "order-by-count"          => \my $order_by_cnt,
+  "since-last-load"         => \my $since_last_load,
   "tq-not-filtered"         => \my $tq_not_filtered,
   "what"                    => \my $what
 ) or die; #_}
@@ -145,8 +146,6 @@ elsif ($hours) { #_{
 } #_}
 elsif ($last_days) { #_{
 
-# my $t_ = t_now() - 60*60 * 24* $last_days;
-
   query_flat(
       'datetime', 
       "'a'=:1", 'a'
@@ -207,6 +206,15 @@ elsif ($show_id) { #_{
   printf "  agent:    %s\n"      , $r->{agent};
   printf "  rog/req:  %d %d\n"   , $r->{rogue}, $r->{requisite};
   printf "  size:     %s\n"      , $r->{size};
+  
+} #_}
+elsif ($since_last_load) { #_{
+
+  query_flat(
+      'datetime', 
+      "'a' =:1", 'a'
+  );
+
   
 } #_}
 
@@ -280,7 +288,7 @@ elsif ($show_id) { #_{
 #_}
 
 
-sub query_flat {
+sub query_flat { #_{
 
   my $tm        = shift;
   my $where_add = shift;
@@ -288,8 +296,7 @@ sub query_flat {
 
   my $where_def = where();
 
-
-  my $sth = $dbh -> prepare ("
+  my $stmt  = "
     select
       id,
       $tm(t, 'unixepoch') tm,
@@ -306,7 +313,11 @@ sub query_flat {
       $where_add
     order by
       t
-  ");
+  ";
+
+  print $stmt;
+
+  my $sth = $dbh -> prepare ($stmt);
 
   $sth -> execute($where_val);
 
@@ -316,30 +327,39 @@ sub query_flat {
     printf("%6d  %s  %-80s %-20s %s %-20s %s\n", $r->{id}, $r->{tm}, $r->{path}, $fqn, $r->{gip_country}, $r->{gip_city}, $r->{referrer});
   }
 
-}
+} #_}
 
-sub where {
+sub where { #_{
 
   my $where_agent = '1=1';
      $where_agent = "agent != 'Mozilla/5.0 (TQ)'" unless $tq_not_filtered;
 
 
   my $where = "
-   robot     = ''      and
-   rogue     =  0      and
-   requisite =  0      and
-   $where_agent ";
+    robot     = ''      and
+    rogue     =  0      and
+    requisite =  0      and
+    $where_agent ";
 
-   if ($last_days) {
-      my $t_ = t_now() - 60*60 * 24* $last_days;
-      $where .= "  and t > $t_ "
-   }
+  my $t_start = 0;
 
+  if ($last_days) { #_{
+    $t_start = t_now() - 60*60 * 24* $last_days;
+  } #_}
+  else {
+    $t_start = ($dbh->selectrow_array('select max(max_t_at_load_start) from load_hist'))[0];
+  }
+
+  printf "
+    where t > %d [ %s ]
+", $t_start, t_2_date_string($t_start);
+
+  $where .= "  and t > $t_start ";
   return $where;
 
-}
+} #_}
 
-sub usage {
+sub usage { #_{
 
   print "
   --count-per-day     [ --order-by-count ]
@@ -350,7 +370,8 @@ sub usage {
   --last-days:i
   --most-accessed
   --referrers
+  --since-last-load
   --tq-not-filtered
   --what
 ";
-}
+} #_}
