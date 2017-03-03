@@ -29,6 +29,8 @@ my $parse_robot_from_agent_string = 1;
 
 my $dns_resolver = new Net::DNS::Resolver;
 my %ipnrs;
+my $ipnrs_found_in_cache = 0;
+my $ipnrs_looked_up = 0;
 
 my $geoip   = Geo::IP->open($geo_ip_file, GEOIP_STANDARD) or die;
 
@@ -60,6 +62,7 @@ printf("loaded %i records in %5.2f seconds (%7.2f recs/s)\n", $rec_cnt, $end_t -
 printf("   %7.4f seconds for sth inserted\n", $total_t_inserted_sth);
 printf("   %7.4f seconds for sth insert\n"  , $total_t_insert_sth);
 printf("   %7.4f seconds for ipnr2fqn\n"    , $total_t_ipnr2fqn);
+print ("   ipnrs in cache: $ipnrs_found_in_cache, ipnrs lookeed up: $ipnrs_looked_up\n");
 
 
 sub load_log_file { #_{
@@ -89,6 +92,9 @@ sub load_log_file { #_{
       }
       elsif ($method eq 'PUT') {
         $method_ = 'p';
+      }
+      elsif ($method eq 'OPTIONS') {
+        $method_ = 'O';
       }
       else {
         die "method = $method"
@@ -270,8 +276,10 @@ sub ipnr_2_fqn { #_{
   my $ipnr = shift;
 
   if (exists $ipnrs{$ipnr}) {
+    $ipnrs_found_in_cache++;
     return $ipnrs{$ipnr};
   }
+  $ipnrs_looked_up++;
   my $query = $dns_resolver->query($ipnr, 'PTR');
 
 
