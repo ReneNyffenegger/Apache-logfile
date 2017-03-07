@@ -265,7 +265,7 @@ sub is_rogue { #_{
   return 1 if $referrer =~m !^http://www.obohu.cz/!;       
  #_}
 
-  return 1 if $path eq '/notes/development/languages/Perl/modules/WWW/Mechanize/Firefox/index/'  and $referrer =~ m|^http://[^/]+/$|;
+  return 1 if $path eq '/notes/development/languages/Perl/modules/WWW/Mechanize/Firefox/index/'  and $referrer =~ m|^https?://[^/]+/$|;
 
   return 1 if $ipnr    eq '185.81.157.145'; # 2017-02-28
 
