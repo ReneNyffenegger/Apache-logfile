@@ -25,7 +25,8 @@ Getopt::Long::GetOptions ( #_{
   "order-by-count"          => \my $order_by_cnt,
   "since-last-load"         => \my $since_last_load,
   "tq-not-filtered"         => \my $tq_not_filtered,
-  "what"                    => \my $what
+  "what"                    => \my $what,
+  "200"                     => \my $not_200
 ) or die; #_}
 
 if ($what) {
@@ -133,6 +134,37 @@ elsif ($show_day) { #_{
       "date(t, 'unixepoch') = :1", $show_day
   );
 
+} #_}
+elsif ($not_200) { #_{
+  
+  my $where_def = where();
+
+  # Status 304: Not modified
+
+  my $sth = $dbh -> prepare ("
+    select
+      count(*) cnt,
+      status,
+      path,
+      referrer
+    from
+      log
+    where
+      $where_def and
+      status not in (200, 304)
+    group by
+      status,
+      path,
+      referrer
+    order by
+      cnt
+");
+  
+  $sth -> execute;
+
+  while (my $r = $sth -> fetchrow_hashref) {
+     printf("%6i %3i %-90s %s\n", $r->{cnt}, $r->{status}, substr($r->{path}, 0, 90), $r->{referrer});
+  }
 } #_}
 elsif ($hours) { #_{
 
@@ -373,5 +405,6 @@ sub usage { #_{
   --since-last-load
   --tq-not-filtered
   --what
+  --200
 ";
 } #_}
