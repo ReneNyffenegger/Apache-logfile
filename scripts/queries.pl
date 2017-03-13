@@ -160,17 +160,19 @@ elsif ($referrers) { #_{
     from
       log
     where
-      $where_def                                           and
-      referrer <> '-'                                      and
-      referrer not like 'http://renenyffenegger.%'         and
-      referrer not like 'http://www.renenyffenegger.ch%'   and
-      referrer not like 'http://www.adp-gmbh.ch%'          and
-      referrer not like 'http://adp-gmbh.ch%'              and
-      referrer not like 'http://www.google.%'              and
-      referrer not like 'https://www.google.%'             and
-      referrer not like 'http://yandex.ru/%'               and
-      referrer not like 'https://t.co/%'                   and
-      referrer not like 'https://translate.googleusercontent.com/%'
+      $where_def                                                                    and
+      referrer <> '-'                                                               and
+      referrer not like 'http://renenyffenegger.%'                                  and
+      referrer not like 'http://www.renenyffenegger.ch%'                            and
+      referrer not like 'http://www.adp-gmbh.ch%'                                   and
+      referrer not like 'http://adp-gmbh.ch%'                                       and
+      referrer not like 'http://www.google.%'                                       and
+      referrer not like 'https://www.google.%'                                      and
+      referrer not like 'http://yandex.ru/%'                                        and
+      referrer not like 'https://t.co/%'                                            and
+      referrer not like 'https://translate.googleusercontent.com/%'                 and
+      referrer !=       'android-app://com.google.android.googlequicksearchbox'     and
+      referrer !=       '(null)'
     group by
       referrer
     order by
