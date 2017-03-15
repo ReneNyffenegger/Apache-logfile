@@ -6,12 +6,12 @@ use DBI;
 use ApacheLogDB;
 use Getopt::Long;
 
-unless (@ARGV) {
+unless (@ARGV) { #_{
 
   usage();
   exit();
 
-}
+} #_}
 
 Getopt::Long::GetOptions ( #_{
   "count-per-day"           => \my $count_per_day,
@@ -19,6 +19,8 @@ Getopt::Long::GetOptions ( #_{
   "fqn:s"                   => \my $show_fqn,
   "hours:i"                 => \my $hours,
   "id:i"                    => \my $show_id,
+  "ips"                     => \my $show_ips,
+  "ip:s"                    => \my $show_ip,
   "last-days:i"             => \my $last_days,
   "most-accessed"           => \my $most_accessed,
   "referrers"               => \my $referrers,
@@ -30,10 +32,10 @@ Getopt::Long::GetOptions ( #_{
   "200"                     => \my $not_200
 ) or die; #_}
 
-if ($what) {
+if ($what) { #_{
   usage();
   exit();
-}
+} #_}
 
 if ($count_per_day) { #_{
 
@@ -88,8 +90,38 @@ elsif ($most_accessed) { #_{
      printf("%6i %s\n", $r->{cnt}, $r->{path});
   }
 } #_}
-elsif ($path) { #_{
+elsif ($show_ips) { #_{
+
+  my $where_def = where();
+
+  my $sth = $dbh -> prepare ("
+    select
+      count(*) cnt,
+      ipnr,
+      gip_country,
+      gip_city,
+      fqn,
+      min(path) min_path
+    from
+      log
+    where
+      $where_def
+    group by
+      ipnr,
+      gip_country,
+      gip_city,
+      fqn
+    order by
+      count(*)
+");
   
+  $sth -> execute;
+
+  while (my $r = $sth -> fetchrow_hashref) {
+     printf("%4i %-15s %s %-20s %-30s %-70s\n", $r->{cnt}, $r->{ipnr}, $r->{gip_country}, $r->{gip_city}, fqn_($r->{fqn}), $r->{min_path});
+  }
+} #_}
+elsif ($path) { #_{
 
   my $t_last_load = t_last_load();
 
@@ -122,26 +154,51 @@ elsif ($path) { #_{
   while (my $r = $sth -> fetchrow_hashref) {
     $r->{gip_city} = substr($r->{gip_city}, 0, 20);
 
-    my @fqn_parts = reverse split '\.', $r->{fqn};
+    $r->{fqn} = fqn_($r->{fqn});
 
-#   print "$r->{fqn}\n";
-#   print join " - ", @fqn_parts;
-#   exit;
+    printf("%s %d %d %s %s %-20s %-15s %-30s %-40s %-40s\n", @$r{qw(method status rogue robot gip_country gip_city ipnr fqn referrer agent)});
+  }
+} #_}
+elsif ($show_ip) { #_{
 
-    if (@fqn_parts > 1) {
-      if (grep {$_ eq $fqn_parts[0]} qw(tr br uk)) {
-        $r->{fqn} = "$fqn_parts[2].$fqn_parts[1].$fqn_parts[0]";
-      }
-      else {
-        $r->{fqn} = "$fqn_parts[1].$fqn_parts[0]";
-      }
+  my $t_last_load = t_last_load();
+
+  my $stmt = "
+    select
+      t,
+      method,
+      status,
+      rogue,
+      robot,
+      path,
+      referrer,
+      agent
+    from
+      log
+    where
+      t > $t_last_load and
+      requisite = 0 and
+      ipnr = '$show_ip'
+    order by
+      t
+";
+
+
+  my $sth = $dbh -> prepare ($stmt);
+  
+  $sth -> execute;
+
+  my $rno = 0;
+  while (my $r = $sth -> fetchrow_hashref) {
+    $rno ++;
+
+    if ($rno == 1) {
+      print "Agent: $r->{agent}\n";
     }
 
-    $r->{fqn} = substr($r->{fqn}, 0, 30);
+    $r->{t} = t_2_date_string($r->{t}); 
 
-
-#   $r->{fqn     } =~ s/^.*\.([^.]+\.[^.]+)\.$/$1/;
-    printf("%s %d %d %s %s %-20s %-15s %-30s %-40s %-40s\n", @$r{qw(method status rogue robot gip_country gip_city ipnr fqn referrer agent)});
+    printf("%s %s %d %d %s %-70s %-70s\n", @$r{qw(t method status rogue robot path referrer)});
   }
 } #_}
 elsif ($referrers) { #_{
@@ -309,11 +366,6 @@ elsif ($since_last_load) { #_{
   
 } #_}
 
-# my $sth = $dbh -> prepare ("select count(*) cnt, path from log where t between strftime('\%s', ?) and strftime('\%s', ?) group by path order by count(*)");
-# $sth -> execute('2016-12-06', '2016-12-07');
-# while (my $r = $sth -> fetchrow_hashref) {
-#    printf("%6i %s\n", $r->{cnt}, $r->{path});
-#_}
 
 # my $sth = $dbh -> prepare ("select count(*) cnt, agent from log where t between strftime('\%s', ?) and strftime('\%s', ?) group by agent order by count(*)");
 # $sth -> execute('2016-12-06', '2016-12-07');
@@ -438,13 +490,9 @@ sub where { #_{
     $t_start = t_now() - 60*60 * 24* $last_days;
   } #_}
   else {
-#   $t_start = ($dbh->selectrow_array('select max(max_t_at_load_start) from load_hist'))[0];
     $t_start = t_last_load();
   }
 
-  printf "
-    where t > %d [ %s ]
-", $t_start, t_2_date_string($t_start);
 
   $where .= "  and t > $t_start ";
   return $where;
@@ -455,6 +503,22 @@ sub t_last_load { #_{
   return ($dbh->selectrow_array('select max(max_t_at_load_start) from load_hist'))[0];
 } #_}
 
+sub fqn_ {
+  my $fqn = shift;
+
+  my @fqn_parts = reverse split '\.', $fqn;
+  if (@fqn_parts > 1) {
+    if (grep {$_ eq $fqn_parts[0]} qw(tr br uk)) {
+      $fqn = "$fqn_parts[2].$fqn_parts[1].$fqn_parts[0]";
+    }
+    else {
+      $fqn = "$fqn_parts[1].$fqn_parts[0]";
+    }
+  }
+
+  return substr($fqn, 0, 30);
+}
+
 sub usage { #_{
 
   print "
@@ -462,6 +526,9 @@ sub usage { #_{
   --day:s
   --fqn:s
   --hours:i
+  --id:i
+  --ips              count per IP
+  --ip:s             Show visits of ipnr
   --id:i
   --last-days:i
   --most-accessed
