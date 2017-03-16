@@ -123,10 +123,11 @@ elsif ($show_ips) { #_{
 } #_}
 elsif ($path) { #_{
 
-  my $t_last_load = t_last_load();
+  my $t_start = t_start();
 
   my $stmt = "
     select
+      t,
       method,
       status,
       rogue,
@@ -140,10 +141,11 @@ elsif ($path) { #_{
     from
       log
     where
-      t > $t_last_load and
+      t > $t_start and
       path = '$path'
     order by
-      ipnr
+      t
+--    ipnr
 ";
 
 
@@ -156,7 +158,14 @@ elsif ($path) { #_{
 
     $r->{fqn} = fqn_($r->{fqn});
 
-    printf("%s %d %d %s %s %-20s %-15s %-30s %-40s %-40s\n", @$r{qw(method status rogue robot gip_country gip_city ipnr fqn referrer agent)});
+    if ($r->{robot}) {
+      $r->{robot} = 'b';
+    }
+    $r->{agent}=substr($r->{agent}, 0, 110);
+
+    $r->{t} = t_2_date_string($r->{t}); 
+
+    printf("%s %s %d %d %1s %s %-20s %-15s %-30s %-40s %-40s\n", @$r{qw(t method status rogue robot gip_country gip_city ipnr fqn referrer agent)});
   }
 } #_}
 elsif ($show_ip) { #_{
@@ -484,18 +493,30 @@ sub where { #_{
     requisite =  0      and
     $where_agent ";
 
-  my $t_start = 0;
+# my $t_start = 0;
+  my $t_start = t_start();
 
-  if ($last_days) { #_{
-    $t_start = t_now() - 60*60 * 24* $last_days;
-  } #_}
-  else {
-    $t_start = t_last_load();
-  }
+# if ($last_days) { #_{
+#   $t_start = t_now() - 60*60 * 24* $last_days;
+# } #_}
+# else {
+#   $t_start = t_last_load();
+# }
 
 
   $where .= "  and t > $t_start ";
   return $where;
+
+} #_}
+
+sub t_start { #_{
+
+  if ($last_days) { #_{
+    return t_now() - 60*60 * 24* $last_days;
+  } #_}
+  else {
+    return t_last_load();
+  }
 
 } #_}
 
