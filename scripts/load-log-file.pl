@@ -265,11 +265,14 @@ sub is_rogue { #_{
   return 1 if $referrer =~m !^http://www.obohu.cz/!;       
   return 1 if $referrer eq   'http://buylyricamrx.com';
   return 1 if $referrer eq   'http://pizza-tycoon.com/';
+  return 1 if $referrer eq   'http://uptime.com/renenyffenegger.ch';
  #_}
 
   return 1 if $path eq '/notes/development/languages/Perl/modules/WWW/Mechanize/Firefox/index/'  and $referrer =~ m|^https?://[^/]+/$|;
 
   return 1 if $ipnr    eq '185.81.157.145'; # 2017-02-28
+  return 1 if $ipnr    eq '218.71.150.87' ; # 2017-03-16
+  return 1 if $ipnr    eq '61.174.160.35' ; # 2017-03-16
 
   return 0;
 } #_}
