@@ -529,7 +529,7 @@ sub fqn_ {
 
   my @fqn_parts = reverse split '\.', $fqn;
   if (@fqn_parts > 1) {
-    if (grep {$_ eq $fqn_parts[0]} qw(tr br uk)) {
+    if (grep {$_ eq $fqn_parts[0]} qw(tr br uk cn)) {
       $fqn = "$fqn_parts[2].$fqn_parts[1].$fqn_parts[0]";
     }
     else {
