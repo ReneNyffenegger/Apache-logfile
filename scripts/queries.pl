@@ -16,7 +16,9 @@ unless (@ARGV) { #_{
 Getopt::Long::GetOptions ( #_{
   "count-per-day"           => \my $count_per_day,
   "day:s"                   => \my $show_day,
+  "exclude-rogue-etc"       => \my $exclude_rogue_etc,
   "fqn:s"                   => \my $show_fqn,
+  "geo-countries"           => \my $geo_countries,
   "hours:i"                 => \my $hours,
   "id:i"                    => \my $show_id,
   "ips"                     => \my $show_ips,
@@ -101,7 +103,8 @@ elsif ($show_ips) { #_{
       gip_country,
       gip_city,
       fqn,
-      min(path) min_path
+      min(path) min_path,
+      max(path) max_path
     from
       log
     where
@@ -118,12 +121,19 @@ elsif ($show_ips) { #_{
   $sth -> execute;
 
   while (my $r = $sth -> fetchrow_hashref) {
-     printf("%4i %-15s %s %-20s %-30s %-70s\n", $r->{cnt}, $r->{ipnr}, $r->{gip_country}, $r->{gip_city}, fqn_($r->{fqn}), $r->{min_path});
+     printf("%4i %-15s %s %-20s %-30s %-70s %-70s\n", $r->{cnt}, $r->{ipnr}, $r->{gip_country}, $r->{gip_city}, fqn_($r->{fqn}), $r->{min_path}, $r->{max_path});
   }
 } #_}
 elsif ($path) { #_{
 
   my $t_start = t_start();
+
+  my $where = 'where';
+  if ($exclude_rogue_etc) {
+    $where .= " rogue = 0 and robot = '' and ";
+#   $where .= " rogue = 0 and ";
+#   $where .= " 1 = 1 and ";
+  }
 
   my $stmt = "
     select
@@ -140,7 +150,7 @@ elsif ($path) { #_{
       agent
     from
       log
-    where
+    $where
       t > $t_start and
       path = '$path'
     order by
@@ -250,6 +260,33 @@ elsif ($referrers) { #_{
   while (my $r = $sth -> fetchrow_hashref) {
     printf("%6i %-${path_width}s %-${path_width}s %s\n", $r->{cnt}, substr($r->{path_min}, 0, $path_width), substr($r->{path_max}, 0, $path_width), substr($r->{referrer}, 0, $referrer_width));
   }
+
+} #_}
+elsif ($geo_countries) { #_{
+
+  my $where_def = where();
+
+  my $stmt = 
+    "select
+       count(*) cnt,
+       gip_country
+     from
+       log
+     where
+       $where_def 
+     group by
+       gip_country
+     order by
+       count(*)";
+
+  print $stmt;
+
+  my $sth = $dbh->prepare($stmt) or die;
+  $sth->execute;
+  while (my $r = $sth->fetchrow_hashref) {
+    printf "%4d %s\n", $r->{cnt}, $r->{gip_country};
+  }
+
 
 } #_}
 elsif ($show_day) { #_{
@@ -375,112 +412,6 @@ elsif ($since_last_load) { #_{
   
 } #_}
 
-
-# my $sth = $dbh -> prepare ("select count(*) cnt, agent from log where t between strftime('\%s', ?) and strftime('\%s', ?) group by agent order by count(*)");
-# $sth -> execute('2016-12-06', '2016-12-07');
-# while (my $r = $sth -> fetchrow_hashref) {
-#    printf("%6i %s\n", $r->{cnt}, $r->{agent});
-#_}
-
-# my $sth = $dbh -> prepare ("select count(*) cnt, agent from log  group by agent order by count(*)");
-# $sth -> execute;
-# while (my $r = $sth -> fetchrow_hashref) {
-#    printf("%6i %s\n", $r->{cnt}, $r->{agent});
-#_}
-
-
-# my $sth = $dbh -> prepare ("select
-#   count(*) cnt,
-#   case when robot = '' then 0 else 1 end robot,
-# --robot,
-#   path,
-#   status
-# from
-#   log
-# where
-#   rogue  = 0 and
-#   status = 404
-# group by
-#   robot,
-# --rogue,
-#   path
-# order by
-#   status,
-#   count(*)");
-# $sth -> execute;
-# while (my $r = $sth -> fetchrow_hashref) {
-#    printf("%6i %3d %d %s\n", $r->{cnt}, $r->{status}, $r->{robot}, $r->{path});
-#_}
-
-# my $sth = $dbh -> prepare ("select count(*) cnt, robot from log  group by robot order by count(*)");
-# $sth -> execute;
-# while (my $r = $sth -> fetchrow_hashref) {
-#    printf("%6i  %s\n", $r->{cnt}, $r->{robot});
-#_}
-
-# my $sth = $dbh -> prepare ("
-#   select
-#     count(*) cnt,
-#     ipnr,
-# --  path,
-#     agent
-#   from
-#     log
-#   where
-#     path = '/wp-content/plugins/revslider/js/rev_admin.js'
-#   group by
-#     ipnr,
-#     agent
-#   order by
-#     count(*)
-# ");
-# $sth -> execute;
-# while (my $r = $sth -> fetchrow_hashref) {
-#    printf("%3i  %15s  %s\n", $r->{cnt}, $r->{ipnr}, $r->{agent});
-#_}
-
-
-sub query_flat { #_{
-
-  my $tm        = shift;
-  my $where_add = shift;
-  my $where_val = shift;
-
-  my $where_def = where();
-
-  my $stmt  = "
-    select
-      id,
-      $tm(t, 'unixepoch') tm,
-      gip_country,
-      gip_city,
-      ipnr,
-      fqn,
-      path,
-      referrer
-    from
-      log
-    where
-      $where_def and
-      $where_add
-    order by
-      t
-  ";
-
-  print $stmt;
-
-  my $sth = $dbh -> prepare ($stmt);
-
-  $sth -> execute($where_val);
-
-
-  while (my $r = $sth -> fetchrow_hashref) {
-    my $fqn = shorten_fqn($r->{fqn}, $r->{ipnr});
-    printf("%6d  %s  %-80s %-20s %s %-20s %s\n", $r->{id}, $r->{tm}, $r->{path}, $fqn, $r->{gip_country}, $r->{gip_city}, $r->{referrer});
-  }
-
-} #_}
-
 sub where { #_{
 
   my $where_agent = '1=1';
@@ -524,7 +455,7 @@ sub t_last_load { #_{
   return ($dbh->selectrow_array('select max(max_t_at_load_start) from load_hist'))[0];
 } #_}
 
-sub fqn_ {
+sub fqn_ { #_{
   my $fqn = shift;
 
   my @fqn_parts = reverse split '\.', $fqn;
@@ -538,22 +469,24 @@ sub fqn_ {
   }
 
   return substr($fqn, 0, 30);
-}
+} #_}
 
 sub usage { #_{
 
   print "
-  --count-per-day     [ --order-by-count ]
+  --count-per-day       [ --order-by-count ]
   --day:s
+  --exclude-rogue-etc     Often set by default, useful (only?) for --path
   --fqn:s
+  --geo-countries
   --hours:i
   --id:i
-  --ips              count per IP
-  --ip:s             Show visits of ipnr
+  --ips                   count per IP
+  --ip:s                  Show visits of ipnr
   --id:i
   --last-days:i
   --most-accessed
-  --path             /foo/bar
+  --path                  /foo/bar
   --referrers
   --since-last-load
   --tq-not-filtered
