@@ -244,6 +244,7 @@ sub is_rogue { #_{
   return 1 if $path =~ m!^/db\.!;
   return 1 if $path eq  '/wp/';
   return 1 if uc($path) eq  '/README.txt';
+  return 1 if $path =~ m!/sftp-config\.json$!;
   return 1 if length($path) > 500;
  #_}
   $referrer = '' unless $referrer;
@@ -269,6 +270,7 @@ sub is_rogue { #_{
  #_}
 
   return 1 if $path eq '/notes/development/languages/Perl/modules/WWW/Mechanize/Firefox/index/'  and $referrer =~ m|^https?://[^/]+/$|;
+  return 1 if $path eq '/notes/Windows/registry/'                                                and $referrer =~ m|^https?://[^/]+/$|;
 
   return 1 if $ipnr    eq '185.81.157.145'; # 2017-02-28
   return 1 if $ipnr    eq '218.71.150.87' ; # 2017-03-16
@@ -276,6 +278,14 @@ sub is_rogue { #_{
   return 1 if $ipnr    eq '218.71.149.185'; # 2017-03-17
   return 1 if $ipnr    eq '125.111.214.23'; # 2017-03-18
   return 1 if $ipnr    eq '122.244.56.159'; # 2017-03-18
+
+  return 1 if $ipnr    eq '125.111.211.245'; # 2017-03-20
+  return 1 if $ipnr    eq '125.111.214.71';
+  return 1 if $ipnr    eq '125.111.213.50';
+  return 1 if $ipnr    eq '125.111.212.106';
+  return 1 if $ipnr    eq '218.71.150.92';
+  return 1 if $ipnr    eq '139.59.178.40';
+
 
   return 0;
 } #_}
