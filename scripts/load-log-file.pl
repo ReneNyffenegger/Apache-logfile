@@ -224,6 +224,7 @@ sub is_rogue { #_{
   return 1 if $path =~ m!^/cleaner[^.]*\.sh$!;
   return 1 if $path =~ m!^/admin!;
   return 1 if $path =~ m!^/xmlrpc.php!;
+  return 1 if $path =~ m!/xmlrpc$!;
   return 1 if $path =~ m!^/kcfinder/!;
   return 1 if $path =~ m!^/tiki!;
   return 1 if $path =~ m!^/www\.sql\.!;
@@ -242,6 +243,10 @@ sub is_rogue { #_{
   return 1 if $path =~ m!^/dbadmin\.!;
   return 1 if $path =~ m!^/backup\.!;
   return 1 if $path =~ m!^/db\.!;
+  return 1 if $path =~ m!/Cms_Wysiwyg/!;
+  return 1 if $path =~ m!/magmi.ini$!;
+  return 1 if $path =~ m!/local\.xml$!;
+  return 1 if $path =~ m!/downloader/$!;
   return 1 if $path eq  '/wp/';
   return 1 if uc($path) eq  '/README.txt';
   return 1 if $path =~ m!/sftp-config\.json$!;
@@ -285,6 +290,9 @@ sub is_rogue { #_{
   return 1 if $ipnr    eq '125.111.212.106';
   return 1 if $ipnr    eq '218.71.150.92';
   return 1 if $ipnr    eq '139.59.178.40';
+
+  return 1 if $ipnr    eq '61.174.160.72';  # 2017-03-21
+  return 1 if $ipnr    eq '218.71.150.174';
 
 
   return 0;

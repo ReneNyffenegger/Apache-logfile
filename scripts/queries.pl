@@ -128,12 +128,10 @@ elsif ($path) { #_{
 
   my $t_start = t_start();
 
-  my $where = 'where';
-  if ($exclude_rogue_etc) {
-    $where .= " rogue = 0 and robot = '' and ";
-#   $where .= " rogue = 0 and ";
-#   $where .= " 1 = 1 and ";
-  }
+  my $where = 'where 1 = 1 ';
+# if ($exclude_rogue_etc) {
+  $where .= where_exclude_rogue_etc(); # " rogue = 0 and robot = '' and ";
+# }
 
   my $stmt = "
     select
@@ -150,13 +148,14 @@ elsif ($path) { #_{
       agent
     from
       log
-    $where
+    $where and
       t > $t_start and
       path = '$path'
     order by
       t
 --    ipnr
 ";
+
 
 
   my $sth = $dbh -> prepare ($stmt);
@@ -180,7 +179,15 @@ elsif ($path) { #_{
 } #_}
 elsif ($show_ip) { #_{
 
+
+  my $where = "   where
+     1 = 1 ";
+
+  $where .= where_exclude_rogue_etc(); # " rogue = 0 and robot = '' and ";
+
   my $t_last_load = t_last_load();
+  $where .= "  and t > $t_last_load ";
+  $where .= "  and ipnr = '$show_ip'";
 
   my $stmt = "
     select
@@ -194,13 +201,13 @@ elsif ($show_ip) { #_{
       agent
     from
       log
-    where
-      t > $t_last_load and
-      requisite = 0 and
-      ipnr = '$show_ip'
+    $where
     order by
       t
 ";
+
+# print $stmt;
+# exit;
 
 
   my $sth = $dbh -> prepare ($stmt);
@@ -424,20 +431,18 @@ sub where { #_{
     requisite =  0      and
     $where_agent ";
 
-# my $t_start = 0;
   my $t_start = t_start();
-
-# if ($last_days) { #_{
-#   $t_start = t_now() - 60*60 * 24* $last_days;
-# } #_}
-# else {
-#   $t_start = t_last_load();
-# }
-
 
   $where .= "  and t > $t_start ";
   return $where;
 
+} #_}
+
+sub where_exclude_rogue_etc { #_{
+  if ($exclude_rogue_etc) {
+    return " and rogue = 0 and robot = '' ";
+  }
+  return "";
 } #_}
 
 sub t_start { #_{
@@ -476,7 +481,7 @@ sub usage { #_{
   print "
   --count-per-day       [ --order-by-count ]
   --day:s
-  --exclude-rogue-etc     Often set by default, useful (only?) for --path
+  --exclude-rogue-etc     Often set by default, useful (only?) for --path and --ip:s
   --fqn:s
   --geo-countries
   --hours:i
