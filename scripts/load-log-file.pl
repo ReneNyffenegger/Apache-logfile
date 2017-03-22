@@ -247,6 +247,7 @@ sub is_rogue { #_{
   return 1 if $path =~ m!/magmi.ini$!;
   return 1 if $path =~ m!/local\.xml$!;
   return 1 if $path =~ m!/downloader/$!;
+  return 1 if $path eq  '/user';
   return 1 if $path eq  '/wp/';
   return 1 if uc($path) eq  '/README.txt';
   return 1 if $path =~ m!/sftp-config\.json$!;
