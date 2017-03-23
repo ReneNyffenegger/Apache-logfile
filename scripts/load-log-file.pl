@@ -295,6 +295,10 @@ sub is_rogue { #_{
   return 1 if $ipnr    eq '61.174.160.72';  # 2017-03-21
   return 1 if $ipnr    eq '218.71.150.174';
 
+  return 1 if $ipnr    eq '61.174.161.13';  # 2017-03-23
+  return 1 if $ipnr    eq '61.174.162.38';
+  return 1 if $ipnr    eq '218.71.148.81';
+
 
   return 0;
 } #_}
