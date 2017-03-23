@@ -14,6 +14,7 @@ unless (@ARGV) { #_{
 } #_}
 
 Getopt::Long::GetOptions ( #_{
+  "bots"                    => \my $bots,
   "count-per-day"           => \my $count_per_day,
   "day:s"                   => \my $show_day,
   "exclude-rogue-etc"       => \my $exclude_rogue_etc,
@@ -65,6 +66,32 @@ if ($count_per_day) { #_{
   $sth -> execute;
   while (my $r = $sth -> fetchrow_hashref) {
      printf("%6i %s\n", $r->{cnt}, $r->{dt});
+  }
+
+} #_}
+elsif ($bots) { #_{
+
+  my $t_start = t_start();
+
+  my $stmt = "
+     select
+       count(*) cnt,
+       robot
+     from
+       log
+     where
+       robot != '' and
+       t > $t_start
+     group by
+       robot
+     order by
+       count(*)
+  ";
+
+  my $sth = $dbh -> prepare($stmt);
+  $sth->execute;
+  while (my $r = $sth -> fetchrow_hashref) {
+    printf "%6i %s\n", $r->{cnt}, $r->{robot};
   }
 
 } #_}
@@ -479,6 +506,7 @@ sub fqn_ { #_{
 sub usage { #_{
 
   print "
+  --bots                  Show count per robots
   --count-per-day       [ --order-by-count ]
   --day:s
   --exclude-rogue-etc     Often set by default, useful (only?) for --path and --ip:s
