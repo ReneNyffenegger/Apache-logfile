@@ -281,7 +281,7 @@ elsif ($referrers) { #_{
       referrer not like 'http://yandex.ru/%'                                        and
       referrer not like 'https://t.co/%'                                            and
       referrer not like 'https://translate.googleusercontent.com/%'                 and
-      referrer !=       'android-app://com.google.android.googlequicksearchbox'     and
+      referrer not like 'android-app://com.google.android.googlequicksearchbox%'    and
       referrer !=       '(null)'
     group by
       referrer
