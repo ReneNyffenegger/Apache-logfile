@@ -448,15 +448,19 @@ elsif ($since_last_load) { #_{
 
 sub where { #_{
 
-  my $where_agent = '1=1';
-     $where_agent = "agent != 'Mozilla/5.0 (TQ)'" unless $tq_not_filtered;
+  my $where_agent = '';
+     $where_agent = "and agent != 'Mozilla/5.0 (TQ)'" unless $tq_not_filtered;
+
+  my $not_Firmen  = '';
+     $not_Firmen  = "and path not like '/Firmen/%'";
 
 
   my $where = "
-    robot     = ''      and
-    rogue     =  0      and
-    requisite =  0      and
-    $where_agent ";
+         robot     = ''
+     and rogue     =  0
+     and requisite =  0
+     $where_agent
+     $not_Firmen";
 
   my $t_start = t_start();
 
@@ -503,12 +507,55 @@ sub fqn_ { #_{
   return substr($fqn, 0, 30);
 } #_}
 
+
+sub query_flat { #_{
+
+  my $tm        = shift;
+  my $where_add = shift;
+  my $where_val = shift;
+
+  my $where_def = where();
+
+  my $stmt  = "
+    select
+      id,
+      $tm(t, 'unixepoch') tm,
+      gip_country,
+      gip_city,
+      ipnr,
+      fqn,
+      path,
+      referrer
+    from
+      log
+    where
+      $where_def and
+      $where_add
+    order by
+      t
+  ";
+
+  print $stmt;
+
+  my $sth = $dbh -> prepare ($stmt);
+
+  $sth -> execute($where_val);
+
+
+  while (my $r = $sth -> fetchrow_hashref) {
+    my $fqn = shorten_fqn($r->{fqn}, $r->{ipnr});
+    printf("%6d  %s  %-80s %-20s %s %-20s %s\n", $r->{id}, $r->{tm}, $r->{path}, $fqn, $r->{gip_country}, $r->{gip_city}, $r->{referrer});
+  }
+
+} #_}
+ 
+  
 sub usage { #_{
 
   print "
   --bots                  Show count per robots
   --count-per-day       [ --order-by-count ]
-  --day:s
+  --day yyyy-mm-dd
   --exclude-rogue-etc     Often set by default, useful (only?) for --path and --ip:s
   --fqn:s
   --geo-countries

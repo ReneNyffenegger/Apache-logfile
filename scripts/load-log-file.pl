@@ -16,9 +16,31 @@ GetOptions('last-month'  => \my $get_last_month) or die;
 my @files = qw(access_log access_log.processed);
 if ($get_last_month) {
     my $date_time = new Time::Piece;
+
+#   my $month = $date_time->add_months(- 6); # Subtract months
+#   my $archive_file_name = $month->strftime('access_log.%Y_%m');
+#   push @files, $archive_file_name;
+
+#      $month = $date_time->add_months(- 5); # Subtract months
+#      $archive_file_name = $month->strftime('access_log.%Y_%m');
+#   push @files, $archive_file_name;
+
+#      $month = $date_time->add_months(- 4); # Subtract months
+#      $archive_file_name = $month->strftime('access_log.%Y_%m');
+#   push @files, $archive_file_name;
+
+#      $month = $date_time->add_months(- 3); # Subtract months
+#      $archive_file_name = $month->strftime('access_log.%Y_%m');
+#   push @files, $archive_file_name;
+
+#      $month = $date_time->add_months(- 2); # Subtract months
+#      $archive_file_name = $month->strftime('access_log.%Y_%m');
+#   push @files, $archive_file_name;
+
     my $month = $date_time->add_months(- 1); # Subtract one month
     my $archive_file_name = $month->strftime('access_log.%Y_%m');
     push @files, $archive_file_name;
+
 }
 
 my $geo_ip_file = '/usr/local/share/GeoIP/GeoIPCity.dat';

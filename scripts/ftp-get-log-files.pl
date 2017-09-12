@@ -29,6 +29,10 @@ $ftp -> cwd('/logs') or die;
   get_file('access_log.processed'     ); # current month until »end of« yesterday
   get_file('access_log.processed.1.gz') if $get_last_month;
 # get_file('access_log.processed.2.gz') if $get_last_month;
+# get_file('access_log.processed.3.gz') if $get_last_month;
+# get_file('access_log.processed.4.gz') if $get_last_month;
+# get_file('access_log.processed.5.gz') if $get_last_month;
+# get_file('access_log.processed.6.gz') if $get_last_month;
 
 sub get_file {
   my $remote_file_name = shift;
@@ -104,6 +108,8 @@ sub translate_file {
   my $from = shift;
   my $to   = shift;
 
+  print "  translate_file: $from -> $to\n" if $verbose;
+
   open (my $src,  '<', $from) or die;
   open (my $dest, '>', $to  ) or die;
 
@@ -129,7 +135,6 @@ sub translate_file {
 
   unlink $from or die;
 
-  print "  translate_file: $from -> $to\n" if $verbose;
 
 }
 
