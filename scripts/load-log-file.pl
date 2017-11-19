@@ -292,6 +292,16 @@ sub is_rogue { #_{
   return 1 if $referrer =~m !^http://www.viandpet.com/!;    
   return 1 if $referrer =~m !^http://www.bible.com/!;       
   return 1 if $referrer =~m !^http://www.obohu.cz/!;       
+  return 1 if $referrer =~m !^https://www.prohoster.info/!;       
+  return 1 if $referrer =~m !^https://2resell.prohoster.info/!;       
+  return 1 if $referrer =~m !^https://2dm.prohoster.info/!;       
+  return 1 if $referrer =~m !^https://blox.ua$!;       
+  return 1 if $referrer =~m !^https://\w+\.blox.ua!;       
+  return 1 if $referrer =~m !^https://link.ac$!;       
+  return 1 if $referrer =~m !^https://vk\.com/!;       
+  return 1 if $referrer =~m !^https://ua\.tc$!;       
+  return 1 if $referrer =~m !^https://blogos\.kz$!;       
+  return 1 if $referrer =~m !^https://www.facebook.com/prohoster/posts/!;       
   return 1 if $referrer eq   'http://buylyricamrx.com';
   return 1 if $referrer eq   'http://pizza-tycoon.com/';
   return 1 if $referrer eq   'http://uptime.com/renenyffenegger.ch';
