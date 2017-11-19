@@ -26,6 +26,7 @@ Getopt::Long::GetOptions ( #_{
   "ip:s"                    => \my $show_ip,
   "last-days:i"             => \my $last_days,
   "most-accessed"           => \my $most_accessed,
+  "newest-record-date"      => \my $newest_record_date,
   "referrers"               => \my $referrers,
   "order-by-count"          => \my $order_by_cnt,
   "path:s"                  => \my $path,
@@ -68,6 +69,9 @@ if ($count_per_day) { #_{
      printf("%6i %s\n", $r->{cnt}, $r->{dt});
   }
 
+} #_}
+elsif ($newest_record_date) { #_{
+  print t_2_date_string(($dbh->selectrow_array('select max(t) from log'))[0]), "\n";
 } #_}
 elsif ($bots) { #_{
 
@@ -507,7 +511,6 @@ sub fqn_ { #_{
   return substr($fqn, 0, 30);
 } #_}
 
-
 sub query_flat { #_{
 
   my $tm        = shift;
@@ -548,7 +551,6 @@ sub query_flat { #_{
   }
 
 } #_}
- 
   
 sub usage { #_{
 
@@ -566,6 +568,7 @@ sub usage { #_{
   --id:i
   --last-days:i
   --most-accessed
+  --newest-record-date    Shows date of most recent record
   --path                  /foo/bar
   --referrers
   --since-last-load
