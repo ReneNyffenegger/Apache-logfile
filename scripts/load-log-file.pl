@@ -305,6 +305,11 @@ sub is_rogue { #_{
   return 1 if $referrer eq   'http://buylyricamrx.com';
   return 1 if $referrer eq   'http://pizza-tycoon.com/';
   return 1 if $referrer eq   'http://uptime.com/renenyffenegger.ch';
+  return 1 if $referrer =~m !^https://prohoster.info/!;
+  return 1 if $referrer eq   'http://www.bankmib.ru/inf/d/tinkoff-credit-cards.html';
+  return 1 if $referrer eq   'http://samara.rosfirm.ru/companies_news/usloviya-kreditovaniya-po-karte-tinkoff-platinum-n775631.htm';
+  return 1 if $referrer eq   'https://sourcedconsulting.com.au';
+
  #_}
 
   return 1 if $path eq '/notes/development/languages/Perl/modules/WWW/Mechanize/Firefox/index/'  and $referrer =~ m|^https?://[^/]+/$|;
