@@ -309,6 +309,11 @@ sub is_rogue { #_{
   return 1 if $referrer eq   'http://www.bankmib.ru/inf/d/tinkoff-credit-cards.html';
   return 1 if $referrer eq   'http://samara.rosfirm.ru/companies_news/usloviya-kreditovaniya-po-karte-tinkoff-platinum-n775631.htm';
   return 1 if $referrer eq   'https://sourcedconsulting.com.au';
+  return 1 if $referrer eq   'http://www.papasdelivery.ru/';
+  return 1 if $referrer eq   'http://rus-lit.com/';
+  return 1 if $referrer eq   'http://efaculty.kiev.ua/';
+  return 1 if $referrer =~m !^http://blogos.kz/!;
+
 
  #_}
 
