@@ -292,9 +292,8 @@ sub is_rogue { #_{
   return 1 if $referrer =~m !^http://www.viandpet.com/!;    
   return 1 if $referrer =~m !^http://www.bible.com/!;       
   return 1 if $referrer =~m !^http://www.obohu.cz/!;       
-  return 1 if $referrer =~m !^https://www.prohoster.info/!;       
-  return 1 if $referrer =~m !^https://2resell.prohoster.info/!;       
-  return 1 if $referrer =~m !^https://2dm.prohoster.info/!;       
+  return 1 if $referrer =~m !^https://\w+.prohoster.info/!;       
+  return 1 if $referrer =~m !^https://prohoster.info/!;
   return 1 if $referrer =~m !^https://blox.ua$!;       
   return 1 if $referrer =~m !^https://\w+\.blox.ua!;       
   return 1 if $referrer =~m !^https://link.ac$!;       
@@ -305,7 +304,6 @@ sub is_rogue { #_{
   return 1 if $referrer eq   'http://buylyricamrx.com';
   return 1 if $referrer eq   'http://pizza-tycoon.com/';
   return 1 if $referrer eq   'http://uptime.com/renenyffenegger.ch';
-  return 1 if $referrer =~m !^https://prohoster.info/!;
   return 1 if $referrer eq   'http://www.bankmib.ru/inf/d/tinkoff-credit-cards.html';
   return 1 if $referrer eq   'http://samara.rosfirm.ru/companies_news/usloviya-kreditovaniya-po-karte-tinkoff-platinum-n775631.htm';
   return 1 if $referrer eq   'https://sourcedconsulting.com.au';
@@ -313,6 +311,13 @@ sub is_rogue { #_{
   return 1 if $referrer eq   'http://rus-lit.com/';
   return 1 if $referrer eq   'http://efaculty.kiev.ua/';
   return 1 if $referrer =~m !^http://blogos.kz/!;
+  return 1 if $referrer =~m !^https://pills24.com/!;
+  return 1 if $referrer =~m !^https://balkanfarma.org/!;
+  return 1 if $referrer =~m !^http://truebeauty.cc/!;
+  return 1 if $referrer eq   'http://lnau.lg/ua/';
+  return 1 if $referrer eq   'http://kollekcioner.ru/';
+  return 1 if $referrer eq   'https://supermama.top/';
+  return 1 if $referrer eq   'https://aanapa.ru/';
 
 
  #_}
