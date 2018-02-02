@@ -312,12 +312,17 @@ sub is_rogue { #_{
   return 1 if $referrer eq   'http://efaculty.kiev.ua/';
   return 1 if $referrer =~m !^http://blogos.kz/!;
   return 1 if $referrer =~m !^https://pills24.com/!;
+  return 1 if $referrer =~m !^https://pills24h.com/!;
   return 1 if $referrer =~m !^https://balkanfarma.org/!;
   return 1 if $referrer =~m !^http://truebeauty.cc/!;
   return 1 if $referrer eq   'http://lnau.lg/ua/';
   return 1 if $referrer eq   'http://kollekcioner.ru/';
   return 1 if $referrer eq   'https://supermama.top/';
   return 1 if $referrer eq   'https://aanapa.ru/';
+  return 1 if $referrer eq   'https://glavtral.ru/';
+  return 1 if $referrer eq   'http://strady.org.ua/';
+  return 1 if $referrer eq   'http://sovetogorod.ru/';
+  return 1 if $referrer eq   'https://vkonche.com/';
 
 
  #_}
