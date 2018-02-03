@@ -119,7 +119,7 @@ sub load_log_file { #_{
         $method_ = 'O';
       }
       else {
-        die "method = $method"
+        print "method = $method (line = $.)"
       } # }
 
 
@@ -292,7 +292,7 @@ sub is_rogue { #_{
   return 1 if $referrer =~m !^http://www.viandpet.com/!;    
   return 1 if $referrer =~m !^http://www.bible.com/!;       
   return 1 if $referrer =~m !^http://www.obohu.cz/!;       
-  return 1 if $referrer =~m !^https://\w+.prohoster.info/!;       
+  return 1 if $referrer =~m !^https://\w+.prohoster.info/?!;       
   return 1 if $referrer =~m !^https://prohoster.info/!;
   return 1 if $referrer =~m !^https://blox.ua$!;       
   return 1 if $referrer =~m !^https://\w+\.blox.ua!;       
