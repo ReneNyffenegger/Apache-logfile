@@ -13,32 +13,32 @@ use ApacheLogDB;
 
 GetOptions('last-month'  => \my $get_last_month) or die;
 
-my @files = qw(access_log access_log.processed);
+my @files = qw(access_ssl_log access_ssl_log.processed);
 if ($get_last_month) {
     my $date_time = new Time::Piece;
 
 #   my $month = $date_time->add_months(- 6); # Subtract months
-#   my $archive_file_name = $month->strftime('access_log.%Y_%m');
+#   my $archive_file_name = $month->strftime('access_ssl_log.%Y_%m');
 #   push @files, $archive_file_name;
 
 #      $month = $date_time->add_months(- 5); # Subtract months
-#      $archive_file_name = $month->strftime('access_log.%Y_%m');
+#      $archive_file_name = $month->strftime('access_ssl_log.%Y_%m');
 #   push @files, $archive_file_name;
 
 #      $month = $date_time->add_months(- 4); # Subtract months
-#      $archive_file_name = $month->strftime('access_log.%Y_%m');
+#      $archive_file_name = $month->strftime('access_ssl_log.%Y_%m');
 #   push @files, $archive_file_name;
 
 #      $month = $date_time->add_months(- 3); # Subtract months
-#      $archive_file_name = $month->strftime('access_log.%Y_%m');
+#      $archive_file_name = $month->strftime('access_ssl_log.%Y_%m');
 #   push @files, $archive_file_name;
 
 #      $month = $date_time->add_months(- 2); # Subtract months
-#      $archive_file_name = $month->strftime('access_log.%Y_%m');
+#      $archive_file_name = $month->strftime('access_ssl_log.%Y_%m');
 #   push @files, $archive_file_name;
 
     my $month = $date_time->add_months(- 1); # Subtract one month
-    my $archive_file_name = $month->strftime('access_log.%Y_%m');
+    my $archive_file_name = $month->strftime('access_ssl_log.%Y_%m');
     push @files, $archive_file_name;
 
 }
@@ -99,7 +99,7 @@ sub load_log_file { #_{
 
     my $rogue = 0;
     my $robot = '';
-  
+
     if ( my ($year, $month, $day, $hour, $min, $sec, $ipnr, $method, $path, $http, $status, $size, $referrer, $agent) = $log_l =~ m!^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d) (\d+\.\d+\.\d+\.\d+) "(\w+) (.*) (HTTP/1\.\d)" (\d+) (\d+) "([^"]*)" "([^"]*)"!) {
 
       my $method_; # {
@@ -124,7 +124,7 @@ sub load_log_file { #_{
 
 
 #     my $t_line = Time::Piece->strptime("$year-$month-$day $hour:$min:$sec", '%Y-%m-%d %H:%M:%S');
-#     my $t =$t_line - $t_1970; 
+#     my $t =$t_line - $t_1970;
       my $t = date_string_2_t("$year-$month-$day $hour:$min:$sec");
 
       my $sth_inserted_start_t = time;
@@ -132,9 +132,9 @@ sub load_log_file { #_{
       my $sth_inserted_end_t = time;
       $total_t_inserted_sth += ($sth_inserted_end_t - $sth_inserted_start_t);
 
-      my $cnt = ($already_inserted_sth -> fetchrow_array)[0];
+      my $cnt_already_inserted = ($already_inserted_sth -> fetchrow_array)[0];
 
-      if ($t > $t_max_in_log) {
+      if ($t > $t_max_in_log) { #_{
 
         # if $t > $t_max_in_log then we should find no
         # record in the db.
@@ -143,30 +143,30 @@ sub load_log_file { #_{
 
         my $t_diff = $t - $t_max_in_log;
 
-        if ($cnt > 0 ) { # {
+        if ($cnt_already_inserted > 0 ) { # {
 
 #         printf("
-#           
+#
 #           t[$t (%s)] > t_max_in_log[$t_max_in_log],
 #           Diff: $t_diff
 #           File: $log_f
 #           Line: $.
 #           IP:   $ipnr
 #           Path: $path
-#           cnt:  $cnt\n\n", t_2_date_string($t));
+#           cnt:  $cnt_already_inserted\n\n", t_2_date_string($t));
 
         } # }
 
-      }
-      else {
+      } #_}
+      else { #_{
 
         # if $t <= $t_max_in_log we check if there is a missing record in
         # the db.
 
-        if ($cnt == 0) {
+        if ($cnt_already_inserted == 0) {
         #
         # Yes, this record seems to be missing
-          printf (" t[$t] <= t_max_in_log[$t_max_in_log] %10d  %1d  %-90s %s\n", $t, $cnt, $path, $ipnr);
+          printf (" t[$t] <= t_max_in_log[$t_max_in_log] %10d  %1d  %-90s %s\n", $t, $cnt_already_inserted, $path, $ipnr);
         }
         else {
         #
@@ -175,7 +175,7 @@ sub load_log_file { #_{
           $do_insert = 0;
         }
 
-      }
+      } #_}
 
       if ($do_insert) {
 
@@ -196,7 +196,7 @@ sub load_log_file { #_{
             $robot = $ua->robot_string || '';
           }
         }
-  
+
         $rogue = is_rogue($path, $referrer, $ipnr);
 
 
@@ -208,11 +208,13 @@ sub load_log_file { #_{
         my $gip_rec     = $geoip->record_by_addr($ipnr);
         my $gip_country = $gip_rec->{country_code};
         my $gip_city    = $gip_rec->{city};
-      
-        my $sth_insert_start_t = time;
-        $insert_sth -> execute($t, $method_, $path, int($status), $referrer, $requisite, $rogue, $robot, $gip_country, $gip_city, $ipnr, $fqn, $agent, $size);
-        my $sth_insert_end_t = time;
-        $total_t_insert_sth += ($sth_insert_end_t - $sth_insert_start_t);
+
+        if ($method_) { # 2018-02-09
+          my $sth_insert_start_t = time;
+          $insert_sth -> execute($t, $method_, $path, int($status), $referrer, $requisite, $rogue, $robot, $gip_country, $gip_city, $ipnr, $fqn, $agent, $size);
+          my $sth_insert_end_t = time;
+          $total_t_insert_sth += ($sth_insert_end_t - $sth_insert_start_t);
+        }
 
         $rec_cnt++;
       }
@@ -220,7 +222,7 @@ sub load_log_file { #_{
     else {
       die "Could not parse\n$log_l\n";
     }
-  
+
   }
 
 } #_}
@@ -289,18 +291,18 @@ sub is_rogue { #_{
   return 1 if $referrer =~m !^http://www.combib.de/!;
   return 1 if $referrer =~m !^http://www.biblestudytools.com!;
   return 1 if $referrer =~m !^http://www.firmenpresse.de/!;
-  return 1 if $referrer =~m !^http://www.viandpet.com/!;    
-  return 1 if $referrer =~m !^http://www.bible.com/!;       
-  return 1 if $referrer =~m !^http://www.obohu.cz/!;       
-  return 1 if $referrer =~m !^https://\w+.prohoster.info/?!;       
+  return 1 if $referrer =~m !^http://www.viandpet.com/!;
+  return 1 if $referrer =~m !^http://www.bible.com/!;
+  return 1 if $referrer =~m !^http://www.obohu.cz/!;
+  return 1 if $referrer =~m !^https?://\w+.prohoster.info/?!;
   return 1 if $referrer =~m !^https://prohoster.info/!;
-  return 1 if $referrer =~m !^https://blox.ua$!;       
-  return 1 if $referrer =~m !^https://\w+\.blox.ua!;       
-  return 1 if $referrer =~m !^https://link.ac$!;       
-  return 1 if $referrer =~m !^https://vk\.com/!;       
-  return 1 if $referrer =~m !^https://ua\.tc$!;       
-  return 1 if $referrer =~m !^https://blogos\.kz$!;       
-  return 1 if $referrer =~m !^https://www.facebook.com/prohoster/posts/!;       
+  return 1 if $referrer =~m !^https://blox.ua$!;
+  return 1 if $referrer =~m !^https://\w+\.blox.ua!;
+  return 1 if $referrer =~m !^https://link.ac$!;
+  return 1 if $referrer =~m !^https://vk\.com/!;
+  return 1 if $referrer =~m !^https://ua\.tc$!;
+  return 1 if $referrer =~m !^https://blogos\.kz$!;
+  return 1 if $referrer =~m !^https://www.facebook.com/prohoster/posts/!;
   return 1 if $referrer eq   'http://buylyricamrx.com';
   return 1 if $referrer eq   'http://pizza-tycoon.com/';
   return 1 if $referrer eq   'http://uptime.com/renenyffenegger.ch';
@@ -323,6 +325,15 @@ sub is_rogue { #_{
   return 1 if $referrer eq   'http://strady.org.ua/';
   return 1 if $referrer eq   'http://sovetogorod.ru/';
   return 1 if $referrer eq   'https://vkonche.com/';
+  return 1 if $referrer eq   'http://chatroulette.life/';
+  return 1 if $referrer eq   'http://metallo-konstruktsii.ru/';
+  return 1 if $referrer eq   'https://xn----9sbubg3ambdfl1j.xn--p1ai/';
+  return 1 if $referrer eq   'http://sildenafil-tadalafil.info/';
+  return 1 if $referrer eq   'http://pornosemki.info/';
+  return 1 if $referrer eq   'https://hentai-manga.porn/';
+  return 1 if $referrer eq   'http://x-lime.net/';
+  return 1 if $referrer eq   'http://superoboi.com.ua/';
+  return 1 if $referrer eq   'http://potolokelekor.ru/';
 
 
  #_}

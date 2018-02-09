@@ -161,7 +161,7 @@ elsif ($path) { #_{
 
   my $where = 'where 1 = 1 ';
   if ($exclude_rogue_etc) {
-    $where .= where_exclude_rogue_etc(); # " rogue = 0 and robot = '' and ";
+#   $where .= where_exclude_rogue_etc(); # " rogue = 0 and robot = '' and ";
   }
 
   my $stmt = "
@@ -180,7 +180,7 @@ elsif ($path) { #_{
     from
       log
     $where and
---    t > $t_start and
+      t > $t_start and
       path = '$path'
     order by
       t
