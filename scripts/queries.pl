@@ -3,8 +3,9 @@ use warnings;
 use strict;
 
 use DBI;
-use ApacheLogDB;
 use Getopt::Long;
+use lib '.';
+use ApacheLogDB;
 
 unless (@ARGV) { #_{
 
@@ -277,6 +278,7 @@ elsif ($referrers) { #_{
       $where_def                                                                    and
       referrer <> '-'                                                               and
       referrer not like 'http://renenyffenegger.%'                                  and
+      referrer not like 'https://renenyffenegger.ch%'                               and
       referrer not like 'http://www.renenyffenegger.ch%'                            and
       referrer not like 'http://www.adp-gmbh.ch%'                                   and
       referrer not like 'http://adp-gmbh.ch%'                                       and

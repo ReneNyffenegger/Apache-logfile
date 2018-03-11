@@ -3,6 +3,8 @@ package ApacheLogDB;
 use warnings;
 use strict;
 
+use lib '.'; # 2018-03-10 / Arch Linux
+
 use Exporter;
 
 use Time::Piece;

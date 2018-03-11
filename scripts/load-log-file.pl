@@ -9,6 +9,7 @@ use Geo::IP;
 use Getopt::Long;
 use Time::Piece;
 
+use lib '.'; # 2018-03-10 / Arch Linux.
 use ApacheLogDB;
 
 GetOptions('last-month'  => \my $get_last_month) or die;
@@ -44,6 +45,7 @@ if ($get_last_month) {
 }
 
 my $geo_ip_file = '/usr/local/share/GeoIP/GeoIPCity.dat';
+die "$geo_ip_file is not readable" unless -r $geo_ip_file;
 my $geo_ip_file_age_s = (stat($geo_ip_file))[9];
 printf "$geo_ip_file is %.1f days old\n", (time - $geo_ip_file_age_s) / 24 / 3600;
 
@@ -102,25 +104,14 @@ sub load_log_file { #_{
 
     if ( my ($year, $month, $day, $hour, $min, $sec, $ipnr, $method, $path, $http, $status, $size, $referrer, $agent) = $log_l =~ m!^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d) (\d+\.\d+\.\d+\.\d+) "(\w+) (.*) (HTTP/1\.\d)" (\d+) (\d+) "([^"]*)" "([^"]*)"!) {
 
-      my $method_; # {
-      if ($method eq 'GET') {
-        $method_ = 'G';
-      }
-      elsif ($method eq 'POST') {
-        $method_ = 'P';
-      }
-      elsif ($method eq 'HEAD') {
-        $method_ = 'H';
-      }
-      elsif ($method eq 'PUT') {
-        $method_ = 'p';
-      }
-      elsif ($method eq 'OPTIONS') {
-        $method_ = 'O';
-      }
-      else {
-        print "method = $method (line = $.)"
-      } # }
+      my $method_; #_{
+      if    ($method eq 'GET'    ) { $method_ = 'G'; }
+      elsif ($method eq 'POST'   ) { $method_ = 'P'; }
+      elsif ($method eq 'HEAD'   ) { $method_ = 'H'; }
+      elsif ($method eq 'PUT'    ) { $method_ = 'p'; }
+      elsif ($method eq 'OPTIONS') { $method_ = 'O'; }
+      else { print "method = $method (line = $.)"
+      } #_}
 
 
 #     my $t_line = Time::Piece->strptime("$year-$month-$day $hour:$min:$sec", '%Y-%m-%d %H:%M:%S');
@@ -177,7 +168,7 @@ sub load_log_file { #_{
 
       } #_}
 
-      if ($do_insert) {
+      if ($do_insert) { #_{
 
         my $ipnr2fqn_start_t = time;
         my $fqn = ipnr_2_fqn($ipnr);
@@ -206,8 +197,14 @@ sub load_log_file { #_{
         }
 
         my $gip_rec     = $geoip->record_by_addr($ipnr);
-        my $gip_country = $gip_rec->{country_code};
-        my $gip_city    = $gip_rec->{city};
+
+        unless (defined $gip_rec) {
+          print "no record for $ipnr\n";
+          next;
+        }
+        
+        my $gip_country = $gip_rec->country_code;
+        my $gip_city    = $gip_rec->city;
 
         if ($method_) { # 2018-02-09
           my $sth_insert_start_t = time;
@@ -217,7 +214,7 @@ sub load_log_file { #_{
         }
 
         $rec_cnt++;
-      }
+      } #_}
     }
     else {
       die "Could not parse\n$log_l\n";
