@@ -192,7 +192,7 @@ sub load_log_file { #_{
 
 
         my $requisite = 0;
-        if ($path eq '/favicon.ico' or $path eq '/robots.txt' or $path =~ /\.(png|css|png|jpg|woff|js|gif|php|pdf|ttf)$/ or $path eq '/font/cartogothicstd-book-webfont.eot?') {
+        if ($path =~ m!/favicon.ico$! or $path eq '/robots.txt' or $path =~ /\.(png|css|png|jpg|woff|js|gif|php|pdf|ttf)$/ or $path eq '/font/cartogothicstd-book-webfont.eot?') {
           $requisite = 1;
         }
 
