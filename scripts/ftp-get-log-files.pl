@@ -117,7 +117,7 @@ sub translate_file {
 
   while (my $line = <$src>) {
 
-    if (my ($ip, $timestamp, $method, $path, $http, $status, $size, $referrer, $agent) = $line =~ m!^(\d+\.\d+\.\d+\.\d+) - - \[(\d+/\w\w\w/\d\d\d\d:\d\d:\d\d:\d\d \+\d\d\d\d)\] "(\w+) (.*) (HTTP/1\.\d)" (\d+) (\d+) "([^"]*)" "([^"]*)"!) { # {{{
+    if (my ($ip, $timestamp, $method, $path, $http, $status, $size, $referrer, $agent) = $line =~ m!^(\d+\.\d+\.\d+\.\d+) - - \[(\d+/\w\w\w/\d\d\d\d:\d\d:\d\d:\d\d \+\d\d\d\d)\] "(\w+) (.*) (HTTP/\d\.\d)" (\d+) (\d+) "([^"]*)" "([^"]*)"!) { # {{{
 
   #   my $addr = addr_of_ip($ip);
   
@@ -127,7 +127,7 @@ sub translate_file {
 
     } # }}}
     else {
-      print "Not mached $line\n";
+      print "Not matched $line\n";
     }
 
   }
